@@ -1,6 +1,13 @@
-# Peer-Review-FE
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  password: string;
+  role: 'student' | 'teacher';
+}
 
-{
+export const mockUsers: User[] = [
+  {
     id: '1',
     name: 'อาจารย์สมชาย',
     email: 'ajarn.somchai@monkup.com',
@@ -14,7 +21,4 @@
     password: 'student123',
     role: 'student'
   }
-
-npm install
-npm run dev
-next.js 14
+]; 
