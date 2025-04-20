@@ -3,8 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useUser } from '../contexts/UserContext';
 import Link from 'next/link';
-import { HomeIcon, ClipboardDocumentListIcon, XMarkIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline';
-import { Note, Material, addNote, addMaterial, getNotes, getMaterials } from '../data/TeacherNotesAndFiles';
+import { HomeIcon, ClipboardDocumentListIcon, XMarkIcon, ArrowUpTrayIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { Note, Material, addNote, addMaterial, getNotes, getMaterials, deleteNote } from '../data/TeacherNotesAndFiles';
 import { useEffect, useState, useRef } from 'react';
 
 export default function Dashboard() {
@@ -102,6 +102,13 @@ export default function Dashboard() {
     }
   };
 
+  const handleDeleteNote = (id: string) => {
+    if (window.confirm('คุณแน่ใจหรือไม่ที่จะลบโน้ตนี้?')) {
+      deleteNote(id);
+      setLocalNotes(getNotes());
+    }
+  };
+
   return (
     <div className="p-6">
       {/* Header */}
@@ -134,7 +141,16 @@ export default function Dashboard() {
               <div key={note.id} className="p-6">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-[#7aa2f7] font-medium">{note.title}</h3>
-                  <span className="text-[#787c99] text-sm">{note.date}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[#787c99] text-sm">{note.date}</span>
+                    <button
+                      onClick={() => handleDeleteNote(note.id)}
+                      className="p-1 text-red-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-400/10"
+                      title="ลบโน้ต"
+                    >
+                      <TrashIcon className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
                 <p className="text-[#a9b1d6] text-sm whitespace-pre-line">{note.content}</p>
               </div>
