@@ -1,5 +1,6 @@
 export interface User {
   id: string;
+  userid: string;
   name: string;
   email: string;
   password: string;
@@ -9,6 +10,7 @@ export interface User {
 export const mockUsers: User[] = [
   {
     id: '1',
+    userid: 'T0000000001',
     name: 'อาจารย์สมชาย',
     email: 'ajarn.somchai@monkup.com',
     password: 'teacher123',
@@ -16,7 +18,8 @@ export const mockUsers: User[] = [
   },
   {
     id: '2',
-    name: 'สมหญิง',
+    userid: '67700000001',
+    name: 'สมหญิง เรียนดี',
     email: 'somying@student.monkup.com',
     password: 'student123',
     role: 'student'

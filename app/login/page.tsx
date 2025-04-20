@@ -13,9 +13,13 @@ export default function LoginPage() {
   const { user, setUser } = useUser();
 
   useEffect(() => {
-    // If user is already logged in, redirect to dashboard
+    // If user is already logged in, redirect to appropriate dashboard
     if (user) {
-      router.push('/dashboard');
+      if (user.role === 'teacher') {
+        router.push('/TeacherDashboard');
+      } else {
+        router.push('/StudentDashboard');
+      }
     }
   }, [user, router]);
 
@@ -25,7 +29,11 @@ export default function LoginPage() {
     
     if (foundUser) {
       setUser(foundUser);
-      router.push('/dashboard');
+      if (foundUser.role === 'teacher') {
+        router.push('/TeacherDashboard');
+      } else {
+        router.push('/StudentDashboard');
+      }
     } else {
       setError('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
     }
@@ -36,7 +44,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="bg-[#24283b] rounded-lg shadow-lg p-8">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-white mb-2">MonkUp</h1>
+            <h1 className="text-3xl font-bold text-white mb-2">Peer Review</h1>
             <p className="text-[#787c99]">เข้าสู่ระบบเพื่อจัดการการเรียนรู้ของคุณ</p>
           </div>
 
