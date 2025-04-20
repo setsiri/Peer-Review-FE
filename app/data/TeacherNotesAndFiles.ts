@@ -14,7 +14,11 @@ export interface Material {
   downloadUrl: string;
 }
 
-export const notes: Note[] = [
+const STORAGE_KEY_NOTES = 'teacher-notes';
+const STORAGE_KEY_MATERIALS = 'teacher-materials';
+
+// Initial data
+const defaultNotes: Note[] = [
   {
     id: '1',
     title: 'Project Phase 1 Guidelines',
@@ -26,16 +30,10 @@ export const notes: Note[] = [
     title: 'Design Patterns Overview',
     content: 'We will cover the following design patterns in next class: Factory, Singleton, Observer, and Strategy patterns.',
     date: '2024-03-24'
-  },
-  {
-    id: '3',
-    title: 'Design Pawdwdwdtterns Overview',
-    content: 'We will cover the following design patterns in next class: Factory, Singleton, Observer, and Strategy patterns.',
-    date: '2024-03-24'
   }
 ];
 
-export const materials: Material[] = [
+const defaultMaterials: Material[] = [
   {
     id: '1',
     title: 'Week 1 - Introduction to Software Design',
@@ -51,13 +49,92 @@ export const materials: Material[] = [
     size: '4.8 MB',
     uploadDate: '2024-03-22',
     downloadUrl: '/materials/week2.pptx'
-  },
-  {
-    id: '3',
-    title: 'Project Requirements Document',
-    type: 'doc',
-    size: '1.2 MB',
-    uploadDate: '2024-03-24',
-    downloadUrl: '/materials/requirements.docx'
   }
 ];
+
+// State management
+let notes: Note[] = [...defaultNotes];
+let materials: Material[] = [...defaultMaterials];
+
+// Initialize data from localStorage
+const initializeData = () => {
+  if (typeof window !== 'undefined') {
+    const storedNotes = localStorage.getItem(STORAGE_KEY_NOTES);
+    const storedMaterials = localStorage.getItem(STORAGE_KEY_MATERIALS);
+    
+    if (storedNotes) {
+      notes = JSON.parse(storedNotes);
+    } else {
+      localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(notes));
+    }
+    
+    if (storedMaterials) {
+      materials = JSON.parse(storedMaterials);
+    } else {
+      localStorage.setItem(STORAGE_KEY_MATERIALS, JSON.stringify(materials));
+    }
+  }
+};
+
+// Function to persist data to localStorage
+const persistData = () => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(notes));
+    localStorage.setItem(STORAGE_KEY_MATERIALS, JSON.stringify(materials));
+  }
+};
+
+// Initialize data on module load
+if (typeof window !== 'undefined') {
+  initializeData();
+}
+
+// Export notes and materials as arrays
+export const getNotes = (): Note[] => notes;
+export const getMaterials = (): Material[] => materials;
+
+export const addNote = (newNote: Omit<Note, 'id'>): Note => {
+  const note: Note = {
+    ...newNote,
+    id: Date.now().toString()
+  };
+  notes = [note, ...notes];
+  persistData();
+  return note;
+};
+
+export const addMaterial = (newMaterial: Omit<Material, 'id'>): Material => {
+  const material: Material = {
+    ...newMaterial,
+    id: Date.now().toString()
+  };
+  materials = [material, ...materials];
+  persistData();
+  return material;
+};
+
+export const deleteNote = (id: string): boolean => {
+  const initialLength = notes.length;
+  notes = notes.filter(note => note.id !== id);
+  if (notes.length !== initialLength) {
+    persistData();
+    return true;
+  }
+  return false;
+};
+
+export const deleteMaterial = (id: string): boolean => {
+  const initialLength = materials.length;
+  materials = materials.filter(material => material.id !== id);
+  if (materials.length !== initialLength) {
+    persistData();
+    return true;
+  }
+  return false;
+};
+
+export const resetData = () => {
+  notes = [...defaultNotes];
+  materials = [...defaultMaterials];
+  persistData();
+};

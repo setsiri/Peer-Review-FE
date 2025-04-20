@@ -60,7 +60,7 @@ export default function Sidebar() {
       <div className="bg-gradient-to-r from-[#1e2030] to-[#95a6ba] p-4">
         <h1 className="text-xl font-semibold text-white">Software Des. & Dev.</h1>
         <p className="text-lg text-white/90 mt-1">2110634</p>
-        <p className="text-white/80 mt-1">Teacher name.</p>
+        <p className="text-white/80 mt-1">อ.สมชาย ดวงดี</p>
       </div>
       <div className="bg-gradient-to-r from-[#04365c] to-[#cbd0d4] p-1"></div>
 

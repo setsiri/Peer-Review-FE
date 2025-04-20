@@ -1,19 +1,24 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '../contexts/UserContext';
 import Link from 'next/link';
 import { HomeIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
-import { notes, materials } from '../data/TeacherNotesAndFiles';
+import { Note, Material, getNotes, getMaterials } from '../data/TeacherNotesAndFiles';
 
 export default function Dashboard() {
   const router = useRouter();
   const { user } = useUser();
+  const [localNotes, setLocalNotes] = useState<Note[]>([]);
+  const [localMaterials, setLocalMaterials] = useState<Material[]>([]);
 
   useEffect(() => {
     if (!user) {
       router.push('/login');
+    } else {
+      setLocalNotes(getNotes());
+      setLocalMaterials(getMaterials());
     }
   }, [user, router]);
 
@@ -47,7 +52,7 @@ export default function Dashboard() {
             <h2 className="text-[#a9b1d6] text-lg font-semibold">Teacher's Notes</h2>
           </div>
           <div className="divide-y divide-[#1a1b26]">
-            {notes.map((note) => (
+            {localNotes.map((note) => (
               <div key={note.id} className="p-6">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-[#7aa2f7] font-medium">{note.title}</h3>
@@ -65,7 +70,7 @@ export default function Dashboard() {
             <h2 className="text-[#a9b1d6] text-lg font-semibold">Course Slides & Documents</h2>
           </div>
           <div className="divide-y divide-[#1a1b26]">
-            {materials.map((material) => (
+            {localMaterials.map((material) => (
               <div key={material.id} className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
