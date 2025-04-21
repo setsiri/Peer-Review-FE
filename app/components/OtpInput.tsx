@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, use } from "react";
+import { useState, useRef } from "react";
 
 interface OtpInputProps {
   onSubmit: (
@@ -24,6 +24,24 @@ export default function OtpInput({ onSubmit, otpRefCode }: OtpInputProps) {
 
     if (value && index < otp.length - 1) {
       inputsRef.current[index + 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text").slice(0, otp.length);
+    if (!/^\d*$/.test(pastedData)) return; // Allow only digits
+
+    const newOtp = [...otp];
+    for (let i = 0; i < pastedData.length; i++) {
+      newOtp[i] = pastedData[i];
+    }
+    setOtp(newOtp);
+
+    // Focus the next empty input
+    const nextEmptyIndex = newOtp.findIndex((digit) => digit === "");
+    if (nextEmptyIndex !== -1) {
+      inputsRef.current[nextEmptyIndex]?.focus();
     }
   };
 
@@ -59,6 +77,7 @@ export default function OtpInput({ onSubmit, otpRefCode }: OtpInputProps) {
               value={digit}
               onChange={(e) => handleChange(e.target.value, index)}
               onKeyDown={(e) => handleKeyDown(e, index)}
+              onPaste={handlePaste}
               className="w-12 h-12 text-center bg-[#1a1b26] border border-[#2a2e3f] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-[#7aa2f7] text-xl"
               maxLength={1}
             />
