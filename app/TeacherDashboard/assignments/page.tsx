@@ -121,7 +121,7 @@ export default function AssignmentsPage() {
           {filteredAssignments.map((assignment) => (
             <Link
               key={assignment.id}
-              href={`/dashboard/assignments/${assignment.id}`}
+              href={`/TeacherDashboard/assignments/${assignment.id}`}
               className="block p-6 hover:bg-[#1a1b26] transition-colors"
             >
               <div className="flex items-center justify-between">

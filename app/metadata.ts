@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "MonkUp",
+  title: "Peer Review System",
   description: "Peer Review System",
 }; 

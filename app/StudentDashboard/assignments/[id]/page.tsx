@@ -33,7 +33,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Redirect to submission confirmation page
-      router.push(`/dashboard/assignments/${params.id}/submitted`);
+      router.push(`/StudentDashboard/assignments/${params.id}/submitted`);
     } catch (err) {
       setError('เกิดข้อผิดพลาดในการส่งคำตอบ กรุณาลองใหม่อีกครั้ง');
       console.error('Submission error:', err);
