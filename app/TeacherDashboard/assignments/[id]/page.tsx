@@ -84,10 +84,12 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
       </div>
 
       <div className="p-6">
-        <AssignmentHeader assignment={assignment} />
+        <div className="mb-4">
+          <AssignmentHeader assignment={assignment} />
+        </div>
 
         {/* Controls */}
-        <div className="bg-[#24283b] rounded-lg p-6 mb-6">
+        <div className="bg-[#24283b] rounded-lg p-6 mb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-8">
               <div className="flex items-center gap-3">

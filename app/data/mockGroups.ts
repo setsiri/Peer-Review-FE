@@ -7,15 +7,6 @@ export interface Group {
 
 export const mockGroups: Group[] = [
   {
-    "name": "ไกไก",
-    "members": [
-      "67700000002",
-      "67700000003"
-    ],
-    "teacherId": "T0000000001",
-    "id": "2"
-  },
-  {
     "name": "6223156156564564",
     "members": [
       "67700000001",

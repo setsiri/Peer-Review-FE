@@ -10,11 +10,17 @@ interface Assignment {
   type: 'solo' | 'group' | 'review';
   target?: string;
   dueDate: string;
-  status: 'pending' | 'in_progress' | 'completed';
+  createdAt: string;
+  status: 'pending' | 'non_submitted' | 'submitted';
 }
 
+type ShowType = 'all' | 'solo' | 'group' | 'review';
+type SortType = 'name' | 'dueDate' | 'createdAt';
+
 export default function AssignmentsPage() {
-  const [filter, setFilter] = useState<'all' | 'in_progress' | 'completed'>('all');
+  const [sortBy, setSortBy] = useState<SortType>('dueDate');
+  const [showType, setShowType] = useState<ShowType>('all');
+  const [filter, setFilter] = useState<'all' | 'non_submitted' | 'submitted'>('all');
 
   const assignments: Assignment[] = [
     {
@@ -22,6 +28,7 @@ export default function AssignmentsPage() {
       title: 'Assignment - Solo 1',
       type: 'solo',
       dueDate: '2024-03-31',
+      createdAt: '2024-03-01',
       status: 'pending'
     },
     {
@@ -29,7 +36,8 @@ export default function AssignmentsPage() {
       title: 'Assignment - Project Group 1',
       type: 'group',
       dueDate: '2024-03-29',
-      status: 'in_progress'
+      createdAt: '2024-03-01',
+      status: 'non_submitted'
     },
     {
       id: '3',
@@ -37,15 +45,30 @@ export default function AssignmentsPage() {
       type: 'review',
       target: 'Student A',
       dueDate: '2024-03-28',
-      status: 'completed'
+      createdAt: '2024-03-01',
+      status: 'submitted'
     }
   ];
 
-  const filteredAssignments = assignments.filter(assignment => {
-    if (filter === 'all') return true;
-    if (filter === 'in_progress') return assignment.status === 'in_progress' || assignment.status === 'pending';
-    return assignment.status === filter;
-  });
+  const filteredAndSortedAssignments = [...assignments]
+    .filter(assignment => {
+      if (showType !== 'all' && assignment.type !== showType) return false;
+      if (filter === 'all') return true;
+      if (filter === 'non_submitted') return assignment.status === 'non_submitted' || assignment.status === 'pending';
+      return assignment.status === filter;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.title.localeCompare(b.title);
+        case 'dueDate':
+          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+        case 'createdAt':
+          return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+        default:
+          return 0;
+      }
+    });
 
   return (
     <div className="p-6">
@@ -81,44 +104,130 @@ export default function AssignmentsPage() {
       {/* Assignments List */}
       <div className="bg-[#24283b] rounded-lg overflow-hidden">
         <div className="p-6 border-b border-[#1a1b26]">
-          <div className="flex items-center gap-3">
-            <span className="text-[#a9b1d6] text-sm font-medium">Show:</span>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setFilter('all')}
-                className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                  ${filter === 'all'
-                    ? 'bg-[#456bd6] text-white'
-                    : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
-                  }`}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setFilter('in_progress')}
-                className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                  ${filter === 'in_progress'
-                    ? 'bg-[#456bd6] text-white'
-                    : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
-                  }`}
-              >
-                In Progress
-              </button>
-              <button
-                onClick={() => setFilter('completed')}
-                className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                  ${filter === 'completed'
-                    ? 'bg-[#456bd6] text-white'
-                    : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
-                  }`}
-              >
-                Completed
-              </button>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-8">
+              <div className="flex items-center gap-3">
+                <span className="text-[#a9b1d6] text-sm font-medium">Sort by:</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setSortBy('name')}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
+                      ${sortBy === 'name'
+                        ? 'bg-[#456bd6] text-white'
+                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      }`}
+                  >
+                    Name (a-z)
+                  </button>
+                  <button
+                    onClick={() => setSortBy('dueDate')}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
+                      ${sortBy === 'dueDate'
+                        ? 'bg-[#456bd6] text-white'
+                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      }`}
+                  >
+                    Due Date
+                  </button>
+                  <button
+                    onClick={() => setSortBy('createdAt')}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
+                      ${sortBy === 'createdAt'
+                        ? 'bg-[#456bd6] text-white'
+                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      }`}
+                  >
+                    Created Date
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-[#a9b1d6] text-sm font-medium">Show:</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowType('all')}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
+                      ${showType === 'all'
+                        ? 'bg-[#456bd6] text-white'
+                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setShowType('solo')}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
+                      ${showType === 'solo'
+                        ? 'bg-[#9ece6a] text-white'
+                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      }`}
+                  >
+                    Solo
+                  </button>
+                  <button
+                    onClick={() => setShowType('group')}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
+                      ${showType === 'group'
+                        ? 'bg-[#7aa2f7] text-white'
+                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      }`}
+                  >
+                    Group
+                  </button>
+                  <button
+                    onClick={() => setShowType('review')}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
+                      ${showType === 'review'
+                        ? 'bg-[#bb9af7] text-white'
+                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      }`}
+                  >
+                    Review
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-[#a9b1d6] text-sm font-medium">Status:</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setFilter('all')}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
+                      ${filter === 'all'
+                        ? 'bg-[#456bd6] text-white'
+                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setFilter('non_submitted')}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
+                      ${filter === 'non_submitted'
+                        ? 'bg-[#456bd6] text-white'
+                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      }`}
+                  >
+                    Non Submitted
+                  </button>
+                  <button
+                    onClick={() => setFilter('submitted')}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
+                      ${filter === 'submitted'
+                        ? 'bg-[#456bd6] text-white'
+                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      }`}
+                  >
+                    Submitted
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
         <div className="divide-y divide-[#1a1b26]">
-          {filteredAssignments.map((assignment) => (
+          {filteredAndSortedAssignments.map((assignment) => (
             <Link
               key={assignment.id}
               href={`/StudentDashboard/assignments/${assignment.id}`}
@@ -129,6 +238,7 @@ export default function AssignmentsPage() {
                   <h3 className="text-[#a9b1d6] font-medium">{assignment.title}</h3>
                   <div className="flex items-center gap-4 mt-2">
                     <span className="text-[#787c99] text-sm">Due: {assignment.dueDate}</span>
+                    <span className="text-[#787c99] text-sm">Created: {assignment.createdAt}</span>
                     {assignment.target && (
                       <span className="text-[#787c99] text-sm">Review for: {assignment.target}</span>
                     )}
@@ -143,8 +253,8 @@ export default function AssignmentsPage() {
                     {assignment.type}
                   </span>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium
-                    ${assignment.status === 'completed' ? 'bg-[#9ece6a]/10 text-[#9ece6a]' :
-                      assignment.status === 'in_progress' ? 'bg-[#e0af68]/10 text-[#e0af68]' :
+                    ${assignment.status === 'submitted' ? 'bg-[#9ece6a]/10 text-[#9ece6a]' :
+                      assignment.status === 'non_submitted' ? 'bg-[#e0af68]/10 text-[#e0af68]' :
                       'bg-[#f7768e]/10 text-[#f7768e]'}`}
                   >
                     {assignment.status}

@@ -3,6 +3,7 @@
 import { useUser } from '../contexts/UserContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { mockUsers } from '../data/mockUsers';
 import {
   HomeIcon,
   ClipboardDocumentListIcon,
@@ -15,6 +16,8 @@ import {
 export default function Sidebar() {
   const { user, setUser } = useUser();
   const router = useRouter();
+
+  const currentUser = user ? mockUsers.find(u => u.id === user.id) : null;
 
   const handleLogout = () => {
     setUser(null);
@@ -80,7 +83,7 @@ export default function Sidebar() {
               {user.role === 'teacher' ? 'Teacher' : 'Student'}
             </div>
             <div className="text-sm text-[#787c99] font-mono">
-              ID: {user.userid}
+              ID: {currentUser?.userid || user.id}
             </div>
           </div>
         </div>
