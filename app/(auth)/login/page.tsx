@@ -5,6 +5,7 @@ import { mockUsers } from "@/app/data/mockUsers";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/app/contexts/UserContext";
 import OtpInput from "@/app/components/OtpInput";
+import Loader from "@/app/components/Loader";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -12,6 +13,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isOtpStage, setIsOtpStage] = useState(false);
   const [foundUser, setFoundUser] = useState(null as any);
+  const [isLoading, setLoading] = useState(false);
 
   const router = useRouter();
   const { user, setUser } = useUser();
@@ -62,6 +64,7 @@ export default function LoginPage() {
   };
 
   const handleGithubLogin = () => {
+    setLoading(true);
     const githubAuthUrl = `http://localhost:3000/auth/github`;
     window.location.href = githubAuthUrl;
   };
@@ -193,17 +196,20 @@ export default function LoginPage() {
   return isOtpStage ? (
     <OtpInput onSubmit={handleOtpSubmit} otpRefCode="RF123456" />
   ) : (
-    <div className="bg-[#24283b] rounded-lg shadow-lg p-8">
-      <Header />
-      <LoginForm
-        email={email}
-        setEmail={setEmail}
-        password={password}
-        setPassword={setPassword}
-        error={error}
-        handleLogin={handleLogin}
-      />
-      <TestCredentials />
-    </div>
+    <>
+      <Loader visible={isLoading} />
+      <div className="bg-[#24283b] rounded-lg shadow-lg p-8">
+        <Header />
+        <LoginForm
+          email={email}
+          setEmail={setEmail}
+          password={password}
+          setPassword={setPassword}
+          error={error}
+          handleLogin={handleLogin}
+        />
+        <TestCredentials />
+      </div>
+    </>
   );
 }
