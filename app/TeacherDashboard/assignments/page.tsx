@@ -54,7 +54,7 @@ export default function AssignmentsPage() {
         <div className="bg-gradient-to-r from-[#1e2030] to-[#95a6ba] rounded-full h-[72px] overflow-hidden relative flex items-center">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white/10"></div>
           <div className="flex items-center gap-4 px-6 relative z-10">
-            <div className="w-12 h-12 bg-gradient-to-br from-[#7aa2f7] to-[#bb9af7] rounded-2xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-[#7aa2f7] to-[#a06bff] rounded-2xl flex items-center justify-center">
               <ClipboardDocumentListIcon className="w-6 h-6 text-white" />
             </div>
             <h1 className="text-3xl font-semibold text-white translate-y-2">Assignment Dashboard</h1>

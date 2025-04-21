@@ -41,7 +41,7 @@ export default function StudentGroupsPage() {
             <div className="w-12 h-12 bg-gradient-to-br from-[#39cf34] to-[#188f54] rounded-2xl flex items-center justify-center">
               <UserGroupIcon className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-3xl font-semibold text-white translate-y-2">กลุ่มของฉัน</h1>
+            <h1 className="text-3xl font-semibold text-white translate-y-2">Groups Dashboard</h1>
           </div>
         </div>
       </div>

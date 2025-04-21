@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
-import { writeFile } from 'fs/promises';
+import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import fs from 'fs';
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 export async function POST(request: Request) {
   try {
@@ -9,6 +12,11 @@ export async function POST(request: Request) {
     
     if (!file) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
+    }
+
+    // ตรวจสอบขนาดไฟล์
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: 'File size exceeds 10MB limit' }, { status: 400 });
     }
 
     const bytes = await file.arrayBuffer();
@@ -20,8 +28,14 @@ export async function POST(request: Request) {
     const extension = path.extname(originalName);
     const fileName = `${timestamp}-${originalName}`;
     
+    // สร้างโฟลเดอร์ถ้ายังไม่มี
+    const uploadDir = path.join(process.cwd(), 'public', 'CourseFiles');
+    if (!fs.existsSync(uploadDir)) {
+      await mkdir(uploadDir, { recursive: true });
+    }
+
     // บันทึกไฟล์
-    const filePath = path.join(process.cwd(), 'public', 'CourseFiles', fileName);
+    const filePath = path.join(uploadDir, fileName);
     await writeFile(filePath, buffer);
 
     return NextResponse.json({ 

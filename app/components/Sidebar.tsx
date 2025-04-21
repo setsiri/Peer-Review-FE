@@ -54,7 +54,7 @@ export default function Sidebar() {
   }
 
   return (
-    <div className="w-64 min-h-screen bg-[#24283b] flex flex-col shadow-xl">
+    <div className="w-64 min-h-screen bg-[#24283b] flex flex-col shadow-xl border-r-2 border-[#414868]">
       {/* Course Info */}
       <div className="bg-gradient-to-r from-[#04365c] to-[#cbd0d4] p-1"></div>
       <div className="bg-gradient-to-r from-[#1e2030] to-[#95a6ba] p-4">

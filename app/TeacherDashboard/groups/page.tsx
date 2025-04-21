@@ -126,10 +126,10 @@ export default function TeacherGroupsPage() {
         <div className="bg-gradient-to-r from-[#1e2030] to-[#95a6ba] rounded-full h-[72px] overflow-hidden relative flex items-center">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white/10"></div>
           <div className="flex items-center gap-4 px-6 relative z-10">
-            <div className="w-12 h-12 bg-gradient-to-br from-[#73daca] to-[#7aa2f7] rounded-2xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-[#39cf34] to-[#188f54] rounded-2xl flex items-center justify-center">
               <UserGroupIcon className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-3xl font-semibold text-white translate-y-2">จัดการกลุ่ม</h1>
+            <h1 className="text-3xl font-semibold text-white translate-y-2">Groups Dashboard</h1>
           </div>
         </div>
       </div>
