@@ -138,7 +138,7 @@ export default function Dashboard() {
             <h2 className="text-[#a9b1d6] text-lg font-semibold">Teacher's Notes</h2>
             <button
               onClick={() => setShowNotePopup(true)}
-              className="px-4 py-2 bg-[#7aa2f7] text-white rounded hover:bg-[#6a92e7] transition-colors"
+              className="px-4 py-2 primary-btn rounded transition-colors"
             >
               Add Note
             </button>
@@ -171,7 +171,7 @@ export default function Dashboard() {
             <h2 className="text-[#a9b1d6] text-lg font-semibold">Course Slides & Documents</h2>
             <button
               onClick={() => setShowMaterialPopup(true)}
-              className="px-4 py-2 bg-[#7aa2f7] text-white rounded hover:bg-[#6a92e7] transition-colors"
+              className="px-4 py-2 primary-btn rounded transition-colors"
             >
               Add Material
             </button>
@@ -243,7 +243,7 @@ export default function Dashboard() {
               />
               <button
                 onClick={handleAddNote}
-                className="w-full py-2 bg-[#7aa2f7] text-white rounded hover:bg-[#6a92e7] transition-colors"
+                className="w-full py-2 primary-btn rounded transition-colors"
               >
                 Add Note
               </button>
@@ -306,7 +306,7 @@ export default function Dashboard() {
               <button
                 onClick={handleAddMaterial}
                 disabled={!newMaterial.downloadUrl}
-                className="w-full py-2 bg-[#7aa2f7] text-white rounded hover:bg-[#6a92e7] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`w-full py-2 rounded transition-colors ${!newMaterial.downloadUrl ? 'primary-btn-disabled' : 'primary-btn'}`}
               >
                 Add Material
               </button>

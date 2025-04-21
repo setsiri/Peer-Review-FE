@@ -64,7 +64,7 @@ export default function StudentGroupsPage() {
                 <ul className="space-y-2">
                   {group.members.map((memberId) => (
                     <li key={memberId} className="text-[#a9b1d6] bg-gradient-to-r from-[#2b3540] to-transparent px-3 py-2 rounded-lg">
-                      {getStudentName(memberId)}
+                      <span className="text-[#7aa2f7]">{memberId}</span> - {getStudentName(memberId)}
                     </li>
                   ))}
                 </ul>

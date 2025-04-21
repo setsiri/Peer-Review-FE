@@ -137,7 +137,7 @@ export default function TeacherGroupsPage() {
       <div className="flex justify-end mb-6">
         <button 
           onClick={handleOpenCreateModal}
-          className="bg-[#1a1b26] text-[#7aa2f7] px-6 py-2 rounded-lg hover:bg-[#2a2e3b] transition-colors flex items-center gap-2"
+          className="primary-btn px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
         >
           <span className="text-xl">+</span> สร้างกลุ่มใหม่
         </button>
@@ -156,7 +156,7 @@ export default function TeacherGroupsPage() {
               <ul className="space-y-2">
                 {group.members.map((memberId) => (
                   <li key={memberId} className="text-[#a9b1d6] bg-gradient-to-r from-[#2b3540] to-transparent px-3 py-2 rounded-lg">
-                    {getStudentName(memberId)}
+                    <span className="text-[#7aa2f7]">{memberId}</span> - {getStudentName(memberId)}
                   </li>
                 ))}
               </ul>
@@ -218,7 +218,9 @@ export default function TeacherGroupsPage() {
                         }}
                         className="mr-3 w-4 h-4 accent-[#7aa2f7]"
                       />
-                      <span className="text-[#a9b1d6]">{student.name}</span>
+                      <span className="text-[#a9b1d6]">
+                        <span className="text-[#7aa2f7]">{student.userid}</span> - {student.name}
+                      </span>
                     </div>
                   ))}
               </div>

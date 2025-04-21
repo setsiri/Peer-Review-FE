@@ -1,9 +1,11 @@
 export interface Assignment {
   id: string;
   title: string;
+  subtitle?: string; // ชื่อที่จะแสดงในหน้ารายละเอียด
   description: string;
-  type: 'solo' | 'group';
+  type: 'solo' | 'group' | 'review';
   dueDate?: Date;
+  targetAssignment?: string; // สำหรับ review assignment เท่านั้น
 }
 
 export interface CodeSubmission {
