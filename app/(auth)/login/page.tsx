@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { mockUsers } from "../data/mockUsers";
+import { mockUsers } from "@/app/data/mockUsers";
 import { useRouter } from "next/navigation";
-import { useUser } from "../contexts/UserContext";
+import { useUser } from "@/app/contexts/UserContext";
 import OtpInput from "@/app/components/OtpInput";
 
 export default function LoginPage() {
