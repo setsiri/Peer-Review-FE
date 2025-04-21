@@ -1,21 +1,16 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, use } from "react";
 
 interface OtpInputProps {
   onSubmit: (
     otp: string,
-    setError: React.Dispatch<React.SetStateAction<string>>
+    setOtpErrorMessage: React.Dispatch<React.SetStateAction<string>>
   ) => void;
-  errorMessage?: string;
   otpRefCode: string; // Reference code to display
 }
 
-export default function OtpInput({
-  onSubmit,
-  otpRefCode,
-  errorMessage = "รหัส OTP ไม่ถูกต้อง",
-}: OtpInputProps) {
+export default function OtpInput({ onSubmit, otpRefCode }: OtpInputProps) {
   const [otp, setOtp] = useState(Array(6).fill(""));
   const [error, setError] = useState("");
   const inputsRef = useRef<HTMLInputElement[]>([]);
@@ -72,7 +67,7 @@ export default function OtpInput({
               ))}
             </div>
 
-            {errorMessage && (
+            {error && (
               <div className="text-[#f7768e] text-sm text-center">{error}</div>
             )}
 
