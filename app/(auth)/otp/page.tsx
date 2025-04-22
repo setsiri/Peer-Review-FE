@@ -41,13 +41,7 @@ export default function OtpPage() {
           name: mapStudentName(profile),
         });
         setLoading(false);
-
-        //TODO: deduplicate with dashboard url
-        if (res.role === "INSTRUCTOR") {
-          router.push("/TeacherDashboard");
-        } else {
-          router.push("/StudentDashboard");
-        }
+        router.push("/dashboard");
       }
     } catch (error) {
       setLoading(false);

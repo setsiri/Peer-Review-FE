@@ -32,7 +32,7 @@ export default function Sidebar() {
     {
       icon: HomeIcon,
       label: 'Home',
-      href: user?.role === 'STUDENT' ? '/StudentDashboard' : '/TeacherDashboard'
+      href: '/dashboard'
     },
     {
       icon: ClipboardDocumentListIcon,
@@ -42,12 +42,12 @@ export default function Sidebar() {
     {
       icon: UserGroupIcon,
       label: 'Group Manage',
-      href: '/groups',
+      href: '/dashboard/groups',
     },
     {
       icon: BellIcon,
       label: 'Notifications',
-      href: '/notifications',
+      href: '/dashboard/notifications',
     }
   ];
 
