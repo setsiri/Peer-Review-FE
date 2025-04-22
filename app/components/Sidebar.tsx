@@ -47,7 +47,7 @@ export default function Sidebar() {
     {
       icon: BellIcon,
       label: 'Notifications',
-      href: user?.role === 'STUDENT' ? '/StudentDashboard/notifications' : '/TeacherDashboard/notifications'
+      href: '/notifications',
     }
   ];
 
