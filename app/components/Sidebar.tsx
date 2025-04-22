@@ -42,7 +42,7 @@ export default function Sidebar() {
     {
       icon: UserGroupIcon,
       label: 'Group Manage',
-      href: user?.role === 'STUDENT' ? '/StudentDashboard/groups' : '/TeacherDashboard/groups'
+      href: '/groups',
     },
     {
       icon: BellIcon,
