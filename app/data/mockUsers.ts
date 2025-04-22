@@ -4,7 +4,7 @@ export interface User {
   name: string;
   email: string;
   password: string;
-  role: 'student' | 'teacher';
+  role: "STUDENT" | "INSTRUCTOR";
 }
 
 export const mockUsers: User[] = [
@@ -14,7 +14,7 @@ export const mockUsers: User[] = [
     name: 'อ.สมชาย ดวงดี',
     email: 'ajarn.somchai@monkup.com',
     password: 'teacher123',
-    role: 'teacher'
+    role: "INSTRUCTOR"
   },
   {
     id: '2',
@@ -22,7 +22,7 @@ export const mockUsers: User[] = [
     name: 'สมหญิง เรียนดี',
     email: 'somying@student.monkup.com',
     password: 'student123',
-    role: 'student'
+    role: "STUDENT"
   },
   {
     id: '3',
@@ -30,7 +30,7 @@ export const mockUsers: User[] = [
     name: 'สมชาย เก่งมาก',
     email: 'somchai@student.monkup.com',
     password: 'student123',
-    role: 'student'
+    role: "STUDENT"
   },
   {
     id: '4',
@@ -38,7 +38,7 @@ export const mockUsers: User[] = [
     name: 'สมใจ ตั้งใจเรียน',
     email: 'somjai@student.monkup.com',
     password: 'student123',
-    role: 'student'
+    role: "STUDENT"
   },
   {
     id: '5',
@@ -46,7 +46,7 @@ export const mockUsers: User[] = [
     name: 'สมหมาย เรียนเก่ง',
     email: 'sommai@student.monkup.com',
     password: 'student123',
-    role: 'student'
+    role: "STUDENT"
   },
   {
     id: '6',
@@ -54,7 +54,7 @@ export const mockUsers: User[] = [
     name: 'สมศรี ตั้งใจ',
     email: 'somsri@student.monkup.com',
     password: 'student123',
-    role: 'student'
+    role: "STUDENT"
   },
   {
     id: '7',
@@ -62,7 +62,7 @@ export const mockUsers: User[] = [
     name: 'สมปอง เรียนดี',
     email: 'sompong@student.monkup.com',
     password: 'student123',
-    role: 'student'
+    role: "STUDENT"
   },
   {
     id: '8',
@@ -70,7 +70,7 @@ export const mockUsers: User[] = [
     name: 'สมพร เก่งมาก',
     email: 'sompon@student.monkup.com',
     password: 'student123',
-    role: 'student'
+    role: "STUDENT"
   },
   {
     id: '9',
@@ -78,6 +78,6 @@ export const mockUsers: User[] = [
     name: 'สมหวัง ตั้งใจเรียน',
     email: 'somwang@student.monkup.com',
     password: 'student123',
-    role: 'student'
+    role: "STUDENT"
   }
 ]; 

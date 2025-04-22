@@ -2,11 +2,11 @@
 
 import OtpInput from "@/app/components/OtpInput";
 import { useUser } from "@/app/contexts/UserContext";
-import { mockUsers } from "@/app/data/mockUsers";
 import { validateOtp, getProfile } from "@/app/lib/auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Loader from "@/app/components/Loader";
+import { mapStudentName } from "@/app/services/commonService";
 
 export default function OtpPage() {
   const [ref, setRef] = useState("");
@@ -35,17 +35,15 @@ export default function OtpPage() {
         await localStorage.setItem("accessToken", accessToken);
         const profile = await getProfile();
         setUser({
-          // id: profile.id, //TODO: Add this field in BE
+          id: profile.id,
           email: profile.email,
           role: profile.role,
-          name: `${profile.firstName}${
-            profile.lastName ? " " + profile.lastName : ""
-          }`,
+          name: mapStudentName(profile),
         });
         setLoading(false);
 
         //TODO: deduplicate with dashboard url
-        if (res.role === "TEACHER") {
+        if (res.role === "INSTRUCTOR") {
           router.push("/TeacherDashboard");
         } else {
           router.push("/StudentDashboard");
