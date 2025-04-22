@@ -1,126 +1,102 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useUser } from '../../contexts/UserContext';
-import { UserGroupIcon } from '@heroicons/react/24/outline';
-import { mockGroups, Group } from '../../data/mockGroups';
-import { mockUsers } from '../../data/mockUsers';
+import { useState, useEffect } from "react";
+import { UserGroupIcon } from "@heroicons/react/24/outline";
+import { mapStudentName } from "@/app/services/commonService";
+import { createGroup, deleteGroup, getGroups } from "@/app/lib/group";
+import { getStudents } from "@/app/lib/users";
+import Loader from "@/app/components/Loader";
 
 export default function TeacherGroupsPage() {
-  const { user } = useUser();
-  const [groups, setGroups] = useState<Group[]>([]);
+  const [toggleRefresh, setToggleRefresh] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [groups, setGroups] = useState<any[]>([]);
+  const [students, setStudents] = useState<any[]>([]);
+
   const [showModal, setShowModal] = useState(false);
-  const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
-  const [editingGroup, setEditingGroup] = useState<Group | null>(null);
-  const [groupName, setGroupName] = useState('');
+  const [modalMode, setModalMode] = useState<"create" | "edit">("create");
+  const [editingGroup, setEditingGroup] = useState<any>(null);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
 
-  // Load initial data
   useEffect(() => {
-    setGroups(mockGroups);
-  }, []);
+    // Fetch groups and students from the server
+    const fetchGroupsAndStudents = async () => {
+      try {
+        setIsLoading(true);
+        const groupsResponse = await getGroups();
+        const studentsResponse = await getStudents();
+
+        setGroups(groupsResponse);
+        setStudents(studentsResponse);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchGroupsAndStudents();
+  }, [toggleRefresh]);
 
   const handleOpenCreateModal = () => {
-    setModalMode('create');
-    setGroupName('');
-    setSelectedStudents([]);
+    setEditingGroup({
+      name: "",
+      users: [],
+    });
+    setModalMode("create");
     setShowModal(true);
   };
 
-  const handleOpenEditModal = (group: Group) => {
-    setModalMode('edit');
+  const handleOpenEditModal = (group: any) => {
+    setModalMode("edit");
     setEditingGroup(group);
-    setGroupName(group.name);
-    setSelectedStudents(group.members);
+    setSelectedStudents(group.users.map((student: any) => student.id));
     setShowModal(true);
   };
 
   const handleSaveGroup = async () => {
-    if (groupName && selectedStudents.length > 0) {
-      try {
-        if (modalMode === 'create') {
-          const response = await fetch('/api/groups', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              action: 'create',
-              data: {
-                name: groupName,
-                members: selectedStudents,
-                teacherId: user?.id || ''
-              }
-            }),
-          });
-
-          const result = await response.json();
-          if (result.success) {
-            setGroups(result.groups);
-          }
-        } else if (modalMode === 'edit' && editingGroup) {
-          const response = await fetch('/api/groups', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              action: 'update',
-              data: {
-                id: editingGroup.id,
-                name: groupName,
-                members: selectedStudents
-              }
-            }),
-          });
-
-          const result = await response.json();
-          if (result.success) {
-            setGroups(result.groups);
-          }
-        }
-
-        setShowModal(false);
-        setGroupName('');
-        setSelectedStudents([]);
-        setEditingGroup(null);
-      } catch (error) {
-        console.error('Error saving group:', error);
-        // You might want to show an error message to the user
-      }
+    if (modalMode === "create") {
+      setIsLoading(true);
+      await createGroup({
+        name: editingGroup.name,
+        userIds: selectedStudents, // array of student IDs
+      });
+      setIsLoading(false);
     }
+    if (modalMode === "edit") {
+      // No backend API for edit group now
+    }
+
+    setShowModal(false);
+    setSelectedStudents([]);
+    setEditingGroup(null);
+    setToggleRefresh(!toggleRefresh);
   };
 
   const handleDeleteGroup = async (groupId: string) => {
-    try {
-      const response = await fetch('/api/groups', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'delete',
-          data: { id: groupId }
-        }),
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        setGroups(result.groups);
-      }
-    } catch (error) {
-      console.error('Error deleting group:', error);
-      // You might want to show an error message to the user
-    }
+    setIsLoading(true);
+    await deleteGroup(groupId);
+    setIsLoading(false);
+    setToggleRefresh(!toggleRefresh);
   };
 
-  const getStudentName = (studentId: string) => {
-    const student = mockUsers.find(user => user.userid === studentId);
-    return student ? student.name : studentId;
+  const getAvailableStudents = () => {
+    return students.filter((student) => {
+      return student.groupId === null;
+    });
+  };
+
+  const getGroupStudents = (groupId: string) => {
+    const group = groups.find((group) => group.id === groupId);
+    if (!group) return [];
+    const groupStudentIds = group.users.map((user: any) => user.id);
+    return students.filter((student) => {
+      return groupStudentIds.includes(student.id);
+    });
   };
 
   return (
     <div className="p-6">
+      <Loader visible={isLoading} />
       {/* Header */}
       <div className="mb-8">
         <div className="bg-gradient-to-r from-[#1e2030] to-[#95a6ba] rounded-full h-[72px] overflow-hidden relative flex items-center">
@@ -129,13 +105,15 @@ export default function TeacherGroupsPage() {
             <div className="w-12 h-12 bg-gradient-to-br from-[#39cf34] to-[#188f54] rounded-2xl flex items-center justify-center">
               <UserGroupIcon className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-3xl font-semibold text-white translate-y-2">Groups Dashboard</h1>
+            <h1 className="text-3xl font-semibold text-white translate-y-2">
+              Groups Dashboard
+            </h1>
           </div>
         </div>
       </div>
 
       <div className="flex justify-end mb-6">
-        <button 
+        <button
           onClick={handleOpenCreateModal}
           className="primary-btn px-6 py-2 rounded-lg transition-colors flex items-center gap-2"
         >
@@ -145,31 +123,43 @@ export default function TeacherGroupsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {groups.map((group) => (
-          <div key={group.id} className="bg-[#24283b] rounded-lg p-6 flex flex-col h-full">
+          <div
+            key={group.id}
+            className="bg-[#24283b] rounded-lg p-6 flex flex-col h-full"
+          >
             <div className="mb-4">
-              <h2 className="text-[#7aa2f7] text-xl font-medium">{group.name}</h2>
+              <h2 className="text-[#7aa2f7] text-xl font-medium">
+                {group.name}
+              </h2>
               <div className="h-[2px] bg-gradient-to-r from-[#7aa2f7] to-transparent mt-2"></div>
             </div>
-            
+
             <div className="flex-grow mb-4">
-              <h3 className="text-[#a9b1d6] text-sm font-medium mb-2">สมาชิก</h3>
+              <h3 className="text-[#a9b1d6] text-sm font-medium mb-2">
+                สมาชิก
+              </h3>
               <ul className="space-y-2">
-                {group.members.map((memberId) => (
-                  <li key={memberId} className="text-[#a9b1d6] bg-gradient-to-r from-[#2b3540] to-transparent px-3 py-2 rounded-lg">
-                    <span className="text-[#7aa2f7]">{memberId}</span> - {getStudentName(memberId)}
+                {group.users.map((student: any) => (
+                  <li
+                    key={student.id}
+                    className="text-[#a9b1d6] bg-gradient-to-r from-[#2b3540] to-transparent px-3 py-2 rounded-lg"
+                  >
+                    <span className="text-[#7aa2f7]">
+                      {mapStudentName(student)}
+                    </span>
                   </li>
                 ))}
               </ul>
             </div>
 
             <div className="flex gap-2 mt-auto">
-              <button 
+              <button
                 onClick={() => handleOpenEditModal(group)}
                 className="flex-1 bg-[#1a1b26] text-[#7aa2f7] px-3 py-2 rounded-lg hover:bg-[#2a2e3b] transition-colors flex items-center justify-center gap-2"
               >
                 แก้ไข
               </button>
-              <button 
+              <button
                 onClick={() => handleDeleteGroup(group.id)}
                 className="flex-1 bg-[#1a1b26] text-[#f7768e] px-3 py-2 rounded-lg hover:bg-[#2a2e3b] transition-colors flex items-center justify-center gap-2"
               >
@@ -185,15 +175,20 @@ export default function TeacherGroupsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-[#24283b] p-6 rounded-lg w-full max-w-md">
             <h2 className="text-xl font-semibold text-[#7aa2f7] mb-4">
-              {modalMode === 'create' ? 'สร้างกลุ่มใหม่' : 'แก้ไขกลุ่ม'}
+              {modalMode === "create" ? "สร้างกลุ่มใหม่" : "แก้ไขกลุ่ม"}
             </h2>
-            
+
             <div className="mb-4">
               <label className="block text-[#a9b1d6] mb-2">ชื่อกลุ่ม</label>
               <input
                 type="text"
-                value={groupName}
-                onChange={(e) => setGroupName(e.target.value)}
+                value={editingGroup?.name || ""}
+                onChange={(e) =>
+                  setEditingGroup({
+                    ...editingGroup,
+                    name: e.target.value,
+                  })
+                }
                 className="w-full bg-[#1a1b26] text-[#a9b1d6] px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7aa2f7]"
                 placeholder="กรอกชื่อกลุ่ม"
               />
@@ -202,27 +197,40 @@ export default function TeacherGroupsPage() {
             <div className="mb-4">
               <label className="block text-[#a9b1d6] mb-2">เลือกสมาชิก</label>
               <div className="max-h-48 overflow-y-auto bg-[#1a1b26] rounded-lg p-3">
-                {mockUsers
-                  .filter(user => user.role === 'student')
-                  .map(student => (
-                    <div key={student.userid} className="flex items-center mb-2 hover:bg-[#2a2e3b] p-2 rounded-lg transition-colors">
-                      <input
-                        type="checkbox"
-                        checked={selectedStudents.includes(student.userid)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedStudents([...selectedStudents, student.userid]);
-                          } else {
-                            setSelectedStudents(selectedStudents.filter(id => id !== student.userid));
-                          }
-                        }}
-                        className="mr-3 w-4 h-4 accent-[#7aa2f7]"
-                      />
-                      <span className="text-[#a9b1d6]">
-                        <span className="text-[#7aa2f7]">{student.userid}</span> - {student.name}
+                {(modalMode === "create"
+                  ? getAvailableStudents()
+                  : getGroupStudents(editingGroup.id).concat(
+                      getAvailableStudents()
+                    )
+                ).map((student: any) => (
+                  <div
+                    key={student.id}
+                    className="flex items-center mb-2 hover:bg-[#2a2e3b] p-2 rounded-lg transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedStudents.includes(student.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedStudents([
+                            ...selectedStudents,
+                            student.id,
+                          ]);
+                        } else {
+                          setSelectedStudents(
+                            selectedStudents.filter((id) => id !== student.id)
+                          );
+                        }
+                      }}
+                      className="mr-3 w-4 h-4 accent-[#7aa2f7]"
+                    />
+                    <span className="text-[#a9b1d6]">
+                      <span className="text-[#7aa2f7]">
+                        {mapStudentName(student)}
                       </span>
-                    </div>
-                  ))}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -230,7 +238,6 @@ export default function TeacherGroupsPage() {
               <button
                 onClick={() => {
                   setShowModal(false);
-                  setGroupName('');
                   setSelectedStudents([]);
                   setEditingGroup(null);
                 }}
@@ -242,7 +249,7 @@ export default function TeacherGroupsPage() {
                 onClick={handleSaveGroup}
                 className="bg-[#7aa2f7] text-white px-4 py-2 rounded-lg hover:bg-[#5d84d7] transition-colors"
               >
-                {modalMode === 'create' ? 'สร้าง' : 'บันทึก'}
+                {modalMode === "create" ? "สร้าง" : "บันทึก"}
               </button>
             </div>
           </div>
@@ -250,4 +257,4 @@ export default function TeacherGroupsPage() {
       )}
     </div>
   );
-} 
+}
