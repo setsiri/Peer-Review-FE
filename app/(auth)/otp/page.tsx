@@ -37,13 +37,13 @@ export default function OtpPage() {
         setUser({
           id: profile.id,
           email: profile.email,
-          role: profile.role.toLowerCase(),
+          role: profile.role,
           name: mapStudentName(profile),
         });
         setLoading(false);
 
         //TODO: deduplicate with dashboard url
-        if (res.role === "teacher") {
+        if (res.role === "INSTRUCTOR") {
           router.push("/TeacherDashboard");
         } else {
           router.push("/StudentDashboard");

@@ -2,7 +2,7 @@
 
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 
-type UserRole = 'student' | 'teacher';
+type UserRole = 'STUDENT' | 'INSTRUCTOR';
 
 interface User {
   id: string;
@@ -24,7 +24,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [role, setRole] = useState<UserRole>('student');
+  const [role, setRole] = useState<UserRole>('STUDENT');
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {

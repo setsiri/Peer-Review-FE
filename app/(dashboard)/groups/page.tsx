@@ -20,8 +20,8 @@ export default function GroupsPage() {
   const [editingGroup, setEditingGroup] = useState<any>(null);
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
 
-  const isTeacher = user?.role === "teacher";
-  const isStudent = user?.role === "student";
+  const isTeacher = user?.role === "INSTRUCTOR";
+  const isStudent = user?.role === "STUDENT";
 
   useEffect(() => {
     const fetchData = async () => {

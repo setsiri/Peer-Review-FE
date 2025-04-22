@@ -38,7 +38,7 @@ export default function Dashboard() {
     return null;
   }
 
-  const assignmentPath = user.role === 'student' 
+  const assignmentPath = user.role === 'STUDENT' 
     ? '/dashboard/studentassignment' 
     : '/dashboard/teacherassignment';
 

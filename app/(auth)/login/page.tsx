@@ -29,7 +29,7 @@ export default function LoginPage() {
 
     // If user is already logged in, redirect to appropriate dashboard
     if (user) {
-      if (user.role === "teacher") {
+      if (user.role === "INSTRUCTOR") {
         router.push("/TeacherDashboard");
       } else {
         router.push("/StudentDashboard");

@@ -51,7 +51,7 @@ export default function Dashboard() {
 
   if (!user) return null;
 
-  const isTeacher = user.role === "teacher";
+  const isTeacher = user.role === "INSTRUCTOR";
 
   const handleAddNote = () => {
     if (newNote.title && newNote.content) {

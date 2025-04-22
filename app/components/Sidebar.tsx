@@ -24,7 +24,7 @@ export default function Sidebar() {
     router.push('/login');
   };
 
-  const assignmentPath = user?.role === 'student' 
+  const assignmentPath = user?.role === 'STUDENT' 
     ? '/StudentDashboard/assignments' 
     : '/TeacherDashboard/assignments';
 
@@ -32,7 +32,7 @@ export default function Sidebar() {
     {
       icon: HomeIcon,
       label: 'Home',
-      href: user?.role === 'student' ? '/StudentDashboard' : '/TeacherDashboard'
+      href: user?.role === 'STUDENT' ? '/StudentDashboard' : '/TeacherDashboard'
     },
     {
       icon: ClipboardDocumentListIcon,
@@ -42,12 +42,12 @@ export default function Sidebar() {
     {
       icon: UserGroupIcon,
       label: 'Group Manage',
-      href: user?.role === 'student' ? '/StudentDashboard/groups' : '/TeacherDashboard/groups'
+      href: user?.role === 'STUDENT' ? '/StudentDashboard/groups' : '/TeacherDashboard/groups'
     },
     {
       icon: BellIcon,
       label: 'Notifications',
-      href: user?.role === 'student' ? '/StudentDashboard/notifications' : '/TeacherDashboard/notifications'
+      href: user?.role === 'STUDENT' ? '/StudentDashboard/notifications' : '/TeacherDashboard/notifications'
     }
   ];
 
@@ -80,14 +80,14 @@ export default function Sidebar() {
           <div>
             <div className="font-medium text-white">{user.name}</div>
             <div className="text-sm text-[#787c99]">
-              {user.role === 'teacher' ? 'Teacher' : 'Student'}
+              {user.role === 'INSTRUCTOR' ? 'Teacher' : 'Student'}
             </div>
             <div className="text-sm text-[#787c99] font-mono">
               ID: {currentUser?.userid || user.id}
             </div>
           </div>
         </div>
-        {user.role === 'student' && user.studentId && (
+        {user.role === 'STUDENT' && user.studentId && (
           <div className="flex items-center gap-2 text-sm text-[#787c99] mt-3">
             <IdentificationIcon className="w-5 h-5" />
             <span className="font-mono">Student ID: {user.studentId}</span>
