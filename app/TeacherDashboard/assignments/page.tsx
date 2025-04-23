@@ -20,6 +20,14 @@ interface Assignment {
   selectedIds?: string[];
 }
 
+interface MasterAssignment {
+  id: string;
+  title: string;
+  detail: string;
+  subjectId: string;
+  isGroupAssignment: boolean;
+}
+
 interface Student {
   id: string;
   name: string;
@@ -62,41 +70,40 @@ export default function AssignmentsPage() {
   const [groups, setGroups] = useState<Group[]>([]);
 
   useEffect(() => {
-    // Load assignments from localStorage
-    const savedAssignments = JSON.parse(localStorage.getItem('assignments') || '[]');
-    const defaultAssignments: Assignment[] = [
-      {
-        id: '1',
-        title: 'Assignment - Solo 1',
-        type: 'solo',
-        dueDate: '2024-03-31',
-        createdAt: '2024-03-01',
-        assignTo: 'all',
-        description: 'โจทย์ที่ 1'
-      },
-      {
-        id: '2',
-        title: 'Assignment - Project Group 1',
-        type: 'group',
-        dueDate: '2024-03-29',
-        createdAt: '2024-03-01',
-        assignTo: 'all',
-        description: 'โจทย์กลุ่ม'
-      },
-      {
-        id: '3',
-        title: 'Assignment - Review Solo 1',
-        type: 'review',
-        target: 'Student A',
-        dueDate: '2024-03-28',
-        createdAt: '2024-03-01',
-        assignTo: 'all',
-        description: 'โจทย์รีวิว'
+    async function fetchAssignments() {
+      try {
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) {
+        throw new Error('No access token found');
       }
-    ];
 
-    // Combine default assignments with saved assignments
-    setAssignments([...defaultAssignments, ...savedAssignments]);
+      const response = await fetch('http://localhost:3000/master-assignments', {
+        headers: {
+        Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch assignments');
+      }
+
+      const data: MasterAssignment[] = await response.json();
+      const fetchedAssignments = data.map((assignment) => ({
+        id: assignment.id,
+        title: assignment.title,
+        type: assignment.isGroupAssignment ? 'group' : 'solo',
+        dueDate: '', // No dueDate in the DTO, so leave blank
+        createdAt: '', // No createdAt in the DTO, so leave blank
+        description: assignment.detail,
+        assignTo: 'all', // Default to 'all'
+      }));
+      setAssignments(fetchedAssignments);
+      } catch (error) {
+      console.error('Error fetching assignments:', error);
+      }
+    }
+
+    fetchAssignments();
 
     // Mock data สำหรับ assignments ที่มีสถานะ SUBMITTED
     const mockAssignments: Assignment[] = [
@@ -622,8 +629,8 @@ export default function AssignmentsPage() {
                 <div>
                   <h3 className="text-[#a9b1d6] font-medium">{assignment.title}</h3>
                   <div className="flex items-center gap-4 mt-2">
-                    <span className="text-[#787c99] text-sm">Due: {assignment.dueDate}</span>
-                    <span className="text-[#787c99] text-sm">Created: {assignment.createdAt}</span>
+                    <span className="text-[#787c99] text-sm">Due: {assignment.dueDate || 'N/A'}</span>
+                    <span className="text-[#787c99] text-sm">Created: {assignment.createdAt || 'N/A'}</span>
                     {assignment.target && (
                       <span className="text-[#787c99] text-sm">Review for: {assignment.target}</span>
                     )}
@@ -687,4 +694,4 @@ export default function AssignmentsPage() {
       )}
     </div>
   );
-} 
+}
