@@ -57,7 +57,7 @@ export default function Sidebar() {
   }
 
   return (
-    <div className="w-64 min-h-screen bg-[#24283b] flex flex-col shadow-xl border-r-2 border-[#414868]">
+    <div className="w-64 h-screen fixed bg-[#24283b] flex flex-col shadow-xl border-r-2 border-[#414868]">
       {/* Course Info */}
       <div className="bg-gradient-to-r from-[#04365c] to-[#cbd0d4] p-1"></div>
       <div className="bg-gradient-to-r from-[#1e2030] to-[#95a6ba] p-4">
@@ -113,7 +113,7 @@ export default function Sidebar() {
       </nav>
 
       {/* Logout Button */}
-      <div className="p-4 mt-auto">
+      <div className="p-4">
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3 text-[#f7768e] hover:bg-[#1a1b26] rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg"

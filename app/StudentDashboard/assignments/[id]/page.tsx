@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CodeEditor from '../../../components/CodeEditor';
+import Review from '../../../components/Review';
 import { Assignment } from '../../../types/assignment';
 import Link from 'next/link';
 
@@ -11,7 +12,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
   const [code, setCode] = useState('// เขียนคำตอบของคุณที่นี่\n');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<'pending' | 'submitted'>('pending');
+  const [status, setStatus] = useState<'submitted' | 'assigned' | 'reviewed' | 'completed'>('assigned');
   const [lastSubmittedTime, setLastSubmittedTime] = useState<Date | null>(null);
 
   // Mock assignment data - ในอนาคตควรดึงจาก API
@@ -25,6 +26,44 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
     dueDate: new Date('2024-12-31'),
     assignedTo: 'ชื่อนักเรียน'
   };
+
+  // Mock review data
+  const mockReviews = [
+    {
+      id: '1',
+      content: 'โค้ดมีการจัดรูปแบบที่ดี และใช้ชื่อตัวแปรที่สื่อความหมาย',
+      author: 'อาจารย์ A',
+      createdAt: new Date('2024-03-15'),
+      comments: [
+        {
+          id: '1',
+          content: 'ควรเพิ่ม comment อธิบายการทำงานของฟังก์ชันด้วย',
+          author: 'นักศึกษา B',
+          createdAt: new Date('2024-03-16'),
+        },
+        {
+          id: '2',
+          content: 'เห็นด้วยครับ จะปรับปรุงให้ดีขึ้น',
+          author: 'นักศึกษา A',
+          createdAt: new Date('2024-03-16'),
+        },
+      ],
+    },
+    {
+      id: '2',
+      content: 'การแก้ปัญหายังไม่มีประสิทธิภาพเท่าที่ควร ควรพิจารณาใช้อัลกอริทึมที่ดีกว่านี้',
+      author: 'อาจารย์ B',
+      createdAt: new Date('2024-03-17'),
+      comments: [
+        {
+          id: '3',
+          content: 'รบกวนแนะนำแนวทางการปรับปรุงเพิ่มเติมด้วยครับ',
+          author: 'นักศึกษา A',
+          createdAt: new Date('2024-03-17'),
+        },
+      ],
+    },
+  ];
 
   const handleSubmit = async () => {
     try {
@@ -74,8 +113,14 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-gray-400">Status:</span>
-              <span className={`px-2 py-1 rounded-full ${status === 'submitted' ? 'bg-green-500/20 text-green-300' : 'bg-yellow-500/20 text-yellow-300'}`}>
-                {status === 'submitted' ? 'Submitted' : 'Pending'}
+              <span className={`px-2 py-1 rounded-full ${
+                status === 'submitted' ? 'bg-blue-500/20 text-blue-300' :
+                status === 'assigned' ? 'bg-yellow-500/20 text-yellow-300' :
+                status === 'reviewed' ? 'bg-purple-500/20 text-purple-300' :
+                status === 'completed' ? 'bg-green-500/20 text-green-300' :
+                'bg-gray-500/20 text-gray-300'
+              }`}>
+                {status.charAt(0).toUpperCase() + status.slice(1)}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -129,6 +174,11 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
               {isSubmitting ? 'กำลังส่ง...' : 'Submit Answer'}
             </button>
           </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="p-6">
+          <Review reviews={mockReviews} />
         </div>
       </div>
     </div>

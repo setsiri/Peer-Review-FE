@@ -4,7 +4,7 @@ export interface Assignment {
   subtitle?: string; // ชื่อที่จะแสดงในหน้ารายละเอียด
   description: string;
   type: 'solo' | 'group' | 'review';
-  status?: 'pending' | 'submitted';
+  status?: 'submitted' | 'assigned' | 'reviewed' | 'completed';
   createdAt?: Date;
   dueDate?: Date;
   assignedTo?: string;

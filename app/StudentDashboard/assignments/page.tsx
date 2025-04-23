@@ -11,7 +11,7 @@ interface Assignment {
   target?: string;
   dueDate: string;
   createdAt: string;
-  status: 'pending' | 'non_submitted' | 'submitted';
+  status: 'submitted' | 'assigned' | 'reviewed' | 'completed';
 }
 
 type ShowType = 'all' | 'solo' | 'group' | 'review';
@@ -20,7 +20,7 @@ type SortType = 'name' | 'dueDate' | 'createdAt';
 export default function AssignmentsPage() {
   const [sortBy, setSortBy] = useState<SortType>('dueDate');
   const [showType, setShowType] = useState<ShowType>('all');
-  const [filter, setFilter] = useState<'all' | 'non_submitted' | 'submitted'>('all');
+  const [filter, setFilter] = useState<'all' | 'submitted' | 'assigned' | 'reviewed' | 'completed'>('all');
 
   const assignments: Assignment[] = [
     {
@@ -29,7 +29,7 @@ export default function AssignmentsPage() {
       type: 'solo',
       dueDate: '2024-03-31',
       createdAt: '2024-03-01',
-      status: 'pending'
+      status: 'assigned'
     },
     {
       id: '2',
@@ -37,7 +37,7 @@ export default function AssignmentsPage() {
       type: 'group',
       dueDate: '2024-03-29',
       createdAt: '2024-03-01',
-      status: 'non_submitted'
+      status: 'submitted'
     },
     {
       id: '3',
@@ -46,7 +46,7 @@ export default function AssignmentsPage() {
       target: 'Student A',
       dueDate: '2024-03-28',
       createdAt: '2024-03-01',
-      status: 'submitted'
+      status: 'completed'
     }
   ];
 
@@ -54,8 +54,11 @@ export default function AssignmentsPage() {
     .filter(assignment => {
       if (showType !== 'all' && assignment.type !== showType) return false;
       if (filter === 'all') return true;
-      if (filter === 'non_submitted') return assignment.status === 'non_submitted' || assignment.status === 'pending';
-      return assignment.status === filter;
+      if (filter === 'submitted') return assignment.status === 'submitted';
+      if (filter === 'assigned') return assignment.status === 'assigned';
+      if (filter === 'reviewed') return assignment.status === 'reviewed';
+      if (filter === 'completed') return assignment.status === 'completed';
+      return false;
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -202,24 +205,44 @@ export default function AssignmentsPage() {
                     All
                   </button>
                   <button
-                    onClick={() => setFilter('non_submitted')}
-                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                      ${filter === 'non_submitted'
-                        ? 'bg-[#456bd6] text-white'
-                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
-                      }`}
-                  >
-                    Non Submitted
-                  </button>
-                  <button
                     onClick={() => setFilter('submitted')}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
                       ${filter === 'submitted'
-                        ? 'bg-[#456bd6] text-white'
+                        ? 'bg-[#7aa2f7] text-white'
                         : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
                       }`}
                   >
                     Submitted
+                  </button>
+                  <button
+                    onClick={() => setFilter('assigned')}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
+                      ${filter === 'assigned'
+                        ? 'bg-[#e0af68] text-white'
+                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      }`}
+                  >
+                    Assigned
+                  </button>
+                  <button
+                    onClick={() => setFilter('reviewed')}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
+                      ${filter === 'reviewed'
+                        ? 'bg-[#bb9af7] text-white'
+                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      }`}
+                  >
+                    Reviewed
+                  </button>
+                  <button
+                    onClick={() => setFilter('completed')}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
+                      ${filter === 'completed'
+                        ? 'bg-[#9ece6a] text-white'
+                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      }`}
+                  >
+                    Completed
                   </button>
                 </div>
               </div>
@@ -252,12 +275,14 @@ export default function AssignmentsPage() {
                   >
                     {assignment.type}
                   </span>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium
-                    ${assignment.status === 'submitted' ? 'bg-[#9ece6a]/10 text-[#9ece6a]' :
-                      assignment.status === 'non_submitted' ? 'bg-[#e0af68]/10 text-[#e0af68]' :
-                      'bg-[#f7768e]/10 text-[#f7768e]'}`}
-                  >
-                    {assignment.status}
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    assignment.status === 'submitted' ? 'bg-[#7aa2f7]/10 text-[#7aa2f7]' :
+                    assignment.status === 'assigned' ? 'bg-[#e0af68]/10 text-[#e0af68]' :
+                    assignment.status === 'reviewed' ? 'bg-[#bb9af7]/10 text-[#bb9af7]' :
+                    assignment.status === 'completed' ? 'bg-[#9ece6a]/10 text-[#9ece6a]' :
+                    'bg-[#f7768e]/10 text-[#f7768e]'
+                  }`}>
+                    {assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
                   </span>
                 </div>
               </div>
