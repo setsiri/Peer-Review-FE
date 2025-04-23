@@ -7,7 +7,7 @@ import {
   Note,
   Material,
   addNote,
-  addMaterial,  
+  addMaterial,
   getNotes,
   getMaterials,
   deleteNote,
@@ -237,7 +237,7 @@ export default function Dashboard() {
             value={newNote.title}
             onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
             placeholder="Title"
-            className="input"
+            className="input border border-[#3b4261] bg-[#1a1b26] text-[#c0caf5] rounded-lg p-2 w-full"
           />
           <textarea
             value={newNote.content}
@@ -245,9 +245,12 @@ export default function Dashboard() {
               setNewNote({ ...newNote, content: e.target.value })
             }
             placeholder="Content"
-            className="input h-32"
+            className="input border border-[#3b4261] bg-[#1a1b26] text-[#c0caf5] rounded-lg p-2 w-full h-32"
           />
-          <button onClick={handleAddNote} className="primary-btn w-full mt-4">
+          <button
+            onClick={handleAddNote}
+            className="primary-btn w-full mt-4 bg-gradient-to-r from-[#7eeddc] to-[#6594f7] text-white py-2 rounded-lg hover:opacity-90"
+          >
             Add Note
           </button>
         </Popup>
@@ -258,8 +261,12 @@ export default function Dashboard() {
           title="Add New Material"
           onClose={() => setShowMaterialPopup(false)}
         >
-          <label htmlFor="file-upload" className="file-upload">
-            <ArrowUpTrayIcon className="w-8 h-8 text-[#7aa2f7]" />
+          <label
+            htmlFor="file-upload"
+            className="file-upload flex flex-col items-center justify-center border border-dashed border-[#3b4261] bg-[#1a1b26] text-[#7aa2f7] rounded-lg p-4 cursor-pointer hover:bg-[#24283b]"
+          >
+            <ArrowUpTrayIcon className="w-8 h-8" />
+            <span className="mt-2">Click to upload file</span>
             <input
               id="file-upload"
               type="file"
@@ -269,20 +276,20 @@ export default function Dashboard() {
               accept=".pdf,.ppt,.doc,.docx"
             />
           </label>
-          {uploading && <p className="text-[#7aa2f7]">Uploading...</p>}
-          {uploadError && <p className="text-red-500">{uploadError}</p>}
+          {uploading && <p className="text-[#7aa2f7] mt-2">Uploading...</p>}
+          {uploadError && <p className="text-red-500 mt-2">{uploadError}</p>}
           <input
             value={newMaterial.title}
             onChange={(e) =>
               setNewMaterial({ ...newMaterial, title: e.target.value })
             }
             placeholder="Title"
-            className="input"
+            className="input border border-[#3b4261] bg-[#1a1b26] text-[#c0caf5] rounded-lg p-2 w-full mt-4"
           />
           <button
             onClick={handleAddMaterial}
             disabled={!newMaterial.downloadUrl}
-            className="primary-btn w-full mt-4"
+            className="primary-btn w-full mt-4 bg-gradient-to-r from-[#7eeddc] to-[#6594f7] text-white py-2 rounded-lg hover:opacity-90 disabled:opacity-50"
           >
             Add Material
           </button>
@@ -303,11 +310,14 @@ function Popup({
 }) {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-[#24283b] p-6 rounded-lg w-full max-w-md">
-        <div className="flex justify-between mb-4">
-          <h3 className="text-lg text-[#a9b1d6] font-semibold">{title}</h3>
-          <button onClick={onClose}>
-            <XMarkIcon className="w-6 h-6 text-[#a9b1d6]" />
+      <div className="bg-gradient-to-br from-[#1e2030] to-[#24283b] p-6 rounded-lg w-full max-w-md shadow-lg">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg text-[#c0caf5] font-semibold">{title}</h3>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full bg-[#1a1b26] hover:bg-[#3b4261]"
+          >
+            <XMarkIcon className="w-6 h-6 text-[#c0caf5]" />
           </button>
         </div>
         <div className="space-y-4">{children}</div>
