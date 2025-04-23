@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 interface Assignment {
   id: string;
@@ -69,7 +68,25 @@ interface Group {
 type ShowType = "all" | "solo" | "group" | "review";
 type SortType = "name" | "dueDate" | "createdAt";
 
+async function createMasterAssignment(data: any, token: string) {
+  const response = await fetch("http://localhost:3000/master-assignments", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to create master assignment");
+  }
+
+  return true;
+}
+
 export default function AssignmentsPage() {
+  const [toggleRefresh, setToggleRefresh] = useState(false);
   const [sortBy, setSortBy] = useState<SortType>("dueDate");
   const [showType, setShowType] = useState<ShowType>("all");
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -95,48 +112,43 @@ export default function AssignmentsPage() {
   const [submittedWork, setSubmittedWork] = useState<
     Array<{ id: string; name: string; status: string }>
   >([]);
-  const [selectedAssignment, setSelectedAssignment] = useState<string>("");
-  const [selectedStudent, setSelectedStudent] = useState<string>("");
   const [students, setStudents] = useState<Student[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
 
-  useEffect(() => {
-    async function fetchAssignments() {
-      try {
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
-          throw new Error("No access token found");
-        }
-
-        const response = await fetch(
-          "http://localhost:3000/master-assignments",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch assignments");
-        }
-
-        const data: MasterAssignment[] = await response.json();
-        const fetchedAssignments = data.map((assignment) => ({
-          id: assignment.id,
-          title: assignment.title,
-          type: "solo", // Default to 'solo' as no type is provided in the response
-          dueDate: "", // No dueDate in the response, so leave blank
-          createdAt: new Date(assignment.createdAt).toLocaleDateString(),
-          description: assignment.detail,
-          assignTo: "all", // Default to 'all'
-        }));
-        setAssignments(fetchedAssignments);
-      } catch (error) {
-        console.error("Error fetching assignments:", error);
+  const fetchAssignments = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        throw new Error("No access token found");
       }
-    }
 
+      const response = await fetch("http://localhost:3000/master-assignments", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch assignments");
+      }
+
+      const data: MasterAssignment[] = await response.json();
+      const fetchedAssignments = data.map((assignment) => ({
+        id: assignment.id,
+        title: assignment.title,
+        type: "solo" as "solo" | "group" | "review", // Explicitly cast to the union type
+        dueDate: "", // No dueDate in the response, so leave blank
+        createdAt: new Date(assignment.createdAt).toLocaleDateString(),
+        description: assignment.detail,
+        assignTo: "all" as "all" | "selected", // Explicitly cast to the union type
+      }));
+      setAssignments(fetchedAssignments);
+    } catch (error) {
+      console.error("Error fetching assignments:", error);
+    }
+  };
+
+  useEffect(() => {
     fetchAssignments();
 
     // Mock data สำหรับ assignments ที่มีสถานะ SUBMITTED
@@ -200,6 +212,21 @@ export default function AssignmentsPage() {
         description: "โจทย์ที่ 1",
       },
     ]);
+  }, [toggleRefresh]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+          throw new Error("No access token found");
+        }
+      } catch (error) {
+        console.error("Error fetching groups or students:", error);
+      }
+    };
+
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -245,6 +272,37 @@ export default function AssignmentsPage() {
         ? prev.selectedIds.filter((selectedId) => selectedId !== id)
         : [...prev.selectedIds, id],
     }));
+  };
+
+  const handleCreateAssignment = async () => {
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        throw new Error("No access token found");
+      }
+
+      // Create master assignment
+      const masterAssignmentPayload = {
+        title: formData.title,
+        detail: formData.description,
+        subjectId: localStorage.getItem("subjectId"),
+        isGroupAssignment: assignmentType === "group",
+      };
+
+      const masterAssignmentSuccess = await createMasterAssignment(
+        masterAssignmentPayload,
+        token
+      );
+
+      if (!masterAssignmentSuccess) {
+        throw new Error("Failed to create master assignment");
+      }
+
+      setIsCreateModalOpen(false);
+      setToggleRefresh(!toggleRefresh); // Refresh the assignments list
+    } catch (error) {
+      console.error("Error creating assignment:", error);
+    }
   };
 
   const filteredAndSortedAssignments = [...assignments]
@@ -322,7 +380,7 @@ export default function AssignmentsPage() {
         />
       </div>
 
-      <div>
+      {/* <div>
         <label className="block text-[#a9b1d6] font-medium mb-2">
           Starter Code
         </label>
@@ -333,7 +391,7 @@ export default function AssignmentsPage() {
           rows={4}
           className="w-full px-4 py-2 rounded-lg bg-[#1a1b26] border border-[#2a2e3f] text-white font-mono"
         />
-      </div>
+      </div> */}
 
       <div>
         <label className="block text-[#a9b1d6] font-medium mb-2">
@@ -348,7 +406,7 @@ export default function AssignmentsPage() {
         />
       </div>
 
-      <div>
+      {/* <div>
         <label className="block text-[#a9b1d6] font-medium mb-2">
           Assign To
         </label>
@@ -388,7 +446,7 @@ export default function AssignmentsPage() {
             ))}
           </div>
         )}
-      </div>
+      </div> */}
     </div>
   );
 
@@ -420,7 +478,7 @@ export default function AssignmentsPage() {
         />
       </div>
 
-      <div>
+      {/* <div>
         <label className="block text-[#a9b1d6] font-medium mb-2">
           Starter Code
         </label>
@@ -431,7 +489,7 @@ export default function AssignmentsPage() {
           rows={4}
           className="w-full px-4 py-2 rounded-lg bg-[#1a1b26] border border-[#2a2e3f] text-white font-mono"
         />
-      </div>
+      </div> */}
 
       <div>
         <label className="block text-[#a9b1d6] font-medium mb-2">
@@ -446,7 +504,7 @@ export default function AssignmentsPage() {
         />
       </div>
 
-      <div>
+      {/* <div>
         <label className="block text-[#a9b1d6] font-medium mb-2">
           Assign To
         </label>
@@ -486,7 +544,7 @@ export default function AssignmentsPage() {
             ))}
           </div>
         )}
-      </div>
+      </div> */}
     </div>
   );
 
@@ -783,9 +841,7 @@ export default function AssignmentsPage() {
                     Back
                   </button>
                   <button
-                    onClick={() => {
-                      /* handle submit */
-                    }}
+                    onClick={handleCreateAssignment}
                     className="px-6 py-2 bg-[#7aa2f7] text-white rounded-lg hover:bg-[#6a92e7]"
                   >
                     Create Assignment
