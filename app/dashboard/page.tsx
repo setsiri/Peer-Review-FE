@@ -165,7 +165,7 @@ export default function Dashboard() {
                     {isTeacher && (
                       <button
                         onClick={() => handleDeleteNote(note.id)}
-                        className="p-1 text-red-400"
+                        className="p-2 rounded-md bg-[#1a1b26] hover:bg-[#3b4261] text-red-400"
                       >
                         <TrashIcon className="w-5 h-5" />
                       </button>
@@ -218,7 +218,7 @@ export default function Dashboard() {
                   {isTeacher && (
                     <button
                       onClick={() => handleDeleteMaterial(m.id)}
-                      className="p-2 text-red-400"
+                      className="p-2 rounded-md bg-[#1a1b26] hover:bg-[#3b4261] text-red-400"
                     >
                       <TrashIcon className="w-5 h-5" />
                     </button>

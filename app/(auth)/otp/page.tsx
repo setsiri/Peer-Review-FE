@@ -6,7 +6,7 @@ import { validateOtp, getProfile } from "@/app/lib/auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Loader from "@/app/components/Loader";
-import { mapStudentName } from "@/app/services/commonService";
+import { mapName } from "@/app/services/commonService";
 
 export default function OtpPage() {
   const [ref, setRef] = useState("");
@@ -38,10 +38,10 @@ export default function OtpPage() {
           id: profile.id,
           email: profile.email,
           role: profile.role,
-          name: mapStudentName(profile),
+          name: mapName(profile),
         });
         setLoading(false);
-        router.push("/dashboard");
+        router.push("/subject");
       }
     } catch (error) {
       setLoading(false);

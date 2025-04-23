@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { UserGroupIcon } from "@heroicons/react/24/outline";
-import { mapStudentName } from "@/app/services/commonService";
+import { mapName } from "@/app/services/commonService";
 import { createGroup, deleteGroup, getGroups } from "@/app/lib/group";
 import { getStudents } from "@/app/lib/users";
 import Loader from "@/app/components/Loader";
@@ -145,7 +145,7 @@ export default function TeacherGroupsPage() {
                     className="text-[#a9b1d6] bg-gradient-to-r from-[#2b3540] to-transparent px-3 py-2 rounded-lg"
                   >
                     <span className="text-[#7aa2f7]">
-                      {mapStudentName(student)}
+                      {mapName(student)}
                     </span>
                   </li>
                 ))}
@@ -226,7 +226,7 @@ export default function TeacherGroupsPage() {
                     />
                     <span className="text-[#a9b1d6]">
                       <span className="text-[#7aa2f7]">
-                        {mapStudentName(student)}
+                        {mapName(student)}
                       </span>
                     </span>
                   </div>

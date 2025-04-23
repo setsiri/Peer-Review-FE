@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@/app/contexts/UserContext";
 import OtpInput from "@/app/components/OtpInput";
 import Loader from "@/app/components/Loader";
+import { getProfile } from "@/app/lib/auth";
+import { mapName } from "@/app/services/commonService";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -29,22 +31,46 @@ export default function LoginPage() {
 
     // If user is already logged in, redirect to appropriate dashboard
     if (user) {
-      router.push("/dashboard");
+      router.push("/subject");
     }
   }, [user, router]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const foundUser = mockUsers.find(
-      (u) => u.email === email && u.password === password
-    );
+    setLoading(true);
 
-    if (foundUser) {
-      setFoundUser(foundUser);
-      setIsOtpStage(true);
+    try {
+      const response = await fetch("http://localhost:3000/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.status !== 201) {
+        setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+        setLoading(false);
+        return;
+      }
+
+      const data = await response.json();
+      await localStorage.setItem("accessToken", data.access_token);
+
+      const profile = await getProfile();
+      setFoundUser({
+        id: profile.id,
+        email: profile.email,
+        role: profile.role,
+        name: mapName(profile),
+      });
       setError("");
-    } else {
-      setError("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+      setIsOtpStage(true);
+    } catch (error) {
+      console.error("Login error:", error);
+      setError("เกิดข้อผิดพลาดในการเข้าสู่ระบบ");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,7 +79,7 @@ export default function LoginPage() {
     setOtpErrorMessage: React.Dispatch<React.SetStateAction<string>>
   ) => {
     if (otp === "123456") {
-      setUser(foundUser); // TODO: Replace with actual user data
+      setUser(foundUser);
     } else {
       setOtpErrorMessage("รหัส OTP ไม่ถูกต้อง");
     }
@@ -204,7 +230,7 @@ export default function LoginPage() {
           error={error}
           handleLogin={handleLogin}
         />
-        <TestCredentials />
+        {/* <TestCredentials /> */}
       </div>
     </>
   );

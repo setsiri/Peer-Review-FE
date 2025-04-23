@@ -22,6 +22,10 @@ export default function Sidebar() {
   const handleLogout = () => {
     setUser(null);
     router.push('/login');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('subjectId');
   };
 
   const assignmentPath = user?.role === 'STUDENT' 
@@ -82,15 +86,15 @@ export default function Sidebar() {
             <div className="text-sm text-[#787c99]">
               {user.role === 'INSTRUCTOR' ? 'Teacher' : 'Student'}
             </div>
-            <div className="text-sm text-[#787c99] font-mono">
+            {/* <div className="text-sm text-[#787c99] font-mono">
               ID: {currentUser?.userid || user.id}
-            </div>
+            </div> */}
           </div>
         </div>
         {user.role === 'STUDENT' && user.studentId && (
           <div className="flex items-center gap-2 text-sm text-[#787c99] mt-3">
             <IdentificationIcon className="w-5 h-5" />
-            <span className="font-mono">Student ID: {user.studentId}</span>
+            {/* <span className="font-mono">Student ID: {user.studentId}</span> */}
           </div>
         )}
       </div>
@@ -116,10 +120,10 @@ export default function Sidebar() {
       <div className="p-4">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 text-[#f7768e] hover:bg-[#1a1b26] rounded-lg transition-all duration-300 hover:scale-105 hover:shadow-lg"
+          className="w-full flex items-center gap-3 px-4 py-2 text-[#f7768e] bg-transparent hover:bg-[#2b2d3c] rounded-md transition-transform duration-200 transform hover:scale-105"
         >
           <ArrowRightOnRectangleIcon className="w-5 h-5" />
-          <span className="text-lg">Logout</span>
+          <span className="text-base font-medium">Logout</span>
         </button>
       </div>
     </div>
