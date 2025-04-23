@@ -85,6 +85,10 @@ export default function GroupsPage() {
     return students.filter((s) => ids.includes(s.id));
   };
 
+  const isSubmitDisabled = () => {
+    return !editingGroup?.name || selectedStudents.length === 0;
+  };
+
   const renderGroupCard = (group: any) => (
     <div
       key={group.id}
@@ -167,7 +171,6 @@ export default function GroupsPage() {
             <h2 className="text-xl font-semibold text-[#7aa2f7] mb-4">
               {modalMode === "create" ? "สร้างกลุ่มใหม่" : "แก้ไขกลุ่ม"}
             </h2>
-
             <div className="mb-4">
               <label className="block text-[#a9b1d6] mb-2">ชื่อกลุ่ม</label>
               <input
@@ -180,39 +183,45 @@ export default function GroupsPage() {
                 placeholder="กรอกชื่อกลุ่ม"
               />
             </div>
-
             <div className="mb-4">
-              <label className="block text-[#a9b1d6] mb-2">เลือกสมาชิก</label>
-              <div className="max-h-48 overflow-y-auto bg-[#1a1b26] rounded-lg p-3">
-                {(modalMode === "create"
-                  ? getAvailableStudents()
-                  : getGroupStudents(editingGroup.id).concat(
-                      getAvailableStudents()
-                    )
-                ).map((student: any) => (
-                  <div
-                    key={student.id}
-                    className="flex items-center mb-2 hover:bg-[#2a2e3b] p-2 rounded-lg"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedStudents.includes(student.id)}
-                      onChange={(e) => {
-                        const updated = e.target.checked
-                          ? [...selectedStudents, student.id]
-                          : selectedStudents.filter((id) => id !== student.id);
-                        setSelectedStudents(updated);
-                      }}
-                      className="mr-3 w-4 h-4 accent-[#7aa2f7]"
-                    />
-                    <span className="text-[#7aa2f7]">
-                      {mapStudentName(student)}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              <label className=" ablock text-[#a9b1d6] mb-2">เลือกสมาชิก</label>
+              {getAvailableStudents().length === 0 && modalMode === "create" ? (
+                <div className="text-[#61667d] text-left self-start">
+                  - นักเรียนมีกลุ่มหมดแล้ว -
+                </div>
+              ) : (
+                <div className="max-h-48 overflow-y-auto bg-[#1a1b26] rounded-lg p-3">
+                  {(modalMode === "create"
+                    ? getAvailableStudents()
+                    : getGroupStudents(editingGroup.id).concat(
+                        getAvailableStudents()
+                      )
+                  ).map((student: any) => (
+                    <div
+                      key={student.id}
+                      className="flex items-center mb-2 hover:bg-[#2a2e3b] p-2 rounded-lg"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedStudents.includes(student.id)}
+                        onChange={(e) => {
+                          const updated = e.target.checked
+                            ? [...selectedStudents, student.id]
+                            : selectedStudents.filter(
+                                (id) => id !== student.id
+                              );
+                          setSelectedStudents(updated);
+                        }}
+                        className="mr-3 w-4 h-4 accent-[#7aa2f7]"
+                      />
+                      <span className="text-[#7aa2f7]">
+                        {mapStudentName(student)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => {
@@ -226,7 +235,10 @@ export default function GroupsPage() {
               </button>
               <button
                 onClick={handleSaveGroup}
-                className="bg-[#7aa2f7] text-white px-4 py-2 rounded-lg hover:bg-[#5d84d7]"
+                disabled={isSubmitDisabled()}
+                className={`bg-[#7aa2f7] text-white px-4 py-2 rounded-lg hover:bg-[#5d84d7] ${
+                  isSubmitDisabled() ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               >
                 {modalMode === "create" ? "สร้าง" : "บันทึก"}
               </button>
