@@ -233,59 +233,78 @@ export default function Dashboard() {
       {/* Popups */}
       {isTeacher && showNotePopup && (
         <Popup title="Add New Note" onClose={() => setShowNotePopup(false)}>
-          <input
-            value={newNote.title}
-            onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
-            placeholder="Title"
-            className="input"
-          />
-          <textarea
-            value={newNote.content}
-            onChange={(e) =>
-              setNewNote({ ...newNote, content: e.target.value })
-            }
-            placeholder="Content"
-            className="input h-32"
-          />
-          <button onClick={handleAddNote} className="primary-btn w-full mt-4">
-            Add Note
-          </button>
+          <div className="space-y-4">
+            <input
+              value={newNote.title}
+              onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
+              placeholder="Enter note title..."
+              className="w-full px-4 py-3 bg-[#1a1b26] border border-[#292e42] rounded-xl text-[#a9b1d6] placeholder-[#545c7e] focus:outline-none focus:border-[#7aa2f7] focus:ring-1 focus:ring-[#7aa2f7] transition-all duration-200"
+            />
+            <textarea
+              value={newNote.content}
+              onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
+              placeholder="Write your note content here..."
+              className="w-full px-4 py-3 bg-[#1a1b26] border border-[#292e42] rounded-xl text-[#a9b1d6] placeholder-[#545c7e] focus:outline-none focus:border-[#7aa2f7] focus:ring-1 focus:ring-[#7aa2f7] transition-all duration-200 h-40 resize-none"
+            />
+            <button 
+              onClick={handleAddNote}
+              className="w-full py-3 bg-gradient-to-r from-[#7aa2f7] to-[#73daca] text-white font-medium rounded-xl hover:opacity-90 transition-opacity duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+            >
+              Add Note
+            </button>
+          </div>
         </Popup>
       )}
 
       {isTeacher && showMaterialPopup && (
-        <Popup
-          title="Add New Material"
-          onClose={() => setShowMaterialPopup(false)}
-        >
-          <label htmlFor="file-upload" className="file-upload">
-            <ArrowUpTrayIcon className="w-8 h-8 text-[#7aa2f7]" />
+        <Popup title="Add New Material" onClose={() => setShowMaterialPopup(false)}>
+          <div className="space-y-5">
+            <label 
+              htmlFor="file-upload" 
+              className="block w-full p-8 border-2 border-dashed border-[#292e42] rounded-xl hover:border-[#7aa2f7] transition-colors duration-200 cursor-pointer bg-[#1a1b26] group"
+            >
+              <div className="flex flex-col items-center gap-3">
+                <ArrowUpTrayIcon className="w-12 h-12 text-[#7aa2f7] group-hover:scale-110 transition-transform duration-200" />
+                <span className="text-[#a9b1d6] text-sm">Click or drag file to upload</span>
+                <span className="text-[#545c7e] text-xs">PDF, PPT, DOC up to 10MB</span>
+              </div>
+              <input
+                id="file-upload"
+                type="file"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                accept=".pdf,.ppt,.doc,.docx"
+              />
+            </label>
+            
+            {uploading && (
+              <div className="text-center py-2">
+                <p className="text-[#7aa2f7] animate-pulse">Uploading your file...</p>
+              </div>
+            )}
+            
+            {uploadError && (
+              <div className="bg-red-500/10 text-red-400 p-3 rounded-lg text-sm text-center">
+                {uploadError}
+              </div>
+            )}
+
             <input
-              id="file-upload"
-              type="file"
-              className="hidden"
-              ref={fileInputRef}
-              onChange={handleFileUpload}
-              accept=".pdf,.ppt,.doc,.docx"
+              value={newMaterial.title}
+              onChange={(e) => setNewMaterial({ ...newMaterial, title: e.target.value })}
+              placeholder="Enter material title..."
+              className="w-full px-4 py-3 bg-[#1a1b26] border border-[#292e42] rounded-xl text-[#a9b1d6] placeholder-[#545c7e] focus:outline-none focus:border-[#7aa2f7] focus:ring-1 focus:ring-[#7aa2f7] transition-all duration-200"
             />
-          </label>
-          {uploading && <p className="text-[#7aa2f7]">Uploading...</p>}
-          {uploadError && <p className="text-red-500">{uploadError}</p>}
-          <input
-            value={newMaterial.title}
-            onChange={(e) =>
-              setNewMaterial({ ...newMaterial, title: e.target.value })
-            }
-            placeholder="Title"
-            className="input"
-          />
-          <button
-            onClick={handleAddMaterial}
-            disabled={!newMaterial.downloadUrl}
-            className="primary-btn w-full mt-4"
-          >
-            Add Material
-          </button>
+
+            <button
+              onClick={handleAddMaterial}
+              disabled={!newMaterial.downloadUrl}
+              className="w-full py-3 bg-gradient-to-r from-[#7aa2f7] to-[#73daca] text-white font-medium rounded-xl hover:opacity-90 transition-opacity duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            >
+              Add Material
+            </button>
+          </div>
         </Popup>
       )}
     </div>
@@ -302,15 +321,18 @@ function Popup({
   onClose: () => void;
 }) {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-[#24283b] p-6 rounded-lg w-full max-w-md">
-        <div className="flex justify-between mb-4">
-          <h3 className="text-lg text-[#a9b1d6] font-semibold">{title}</h3>
-          <button onClick={onClose}>
-            <XMarkIcon className="w-6 h-6 text-[#a9b1d6]" />
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
+      <div className="bg-gradient-to-br from-[#24283b] to-[#1a1b26] p-8 rounded-2xl w-full max-w-md shadow-xl transform animate-slideUp">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl text-[#a9b1d6] font-semibold bg-gradient-to-r from-[#7aa2f7] to-[#73daca] bg-clip-text text-transparent">{title}</h3>
+          <button 
+            onClick={onClose}
+            className="p-2 hover:bg-[#1a1b26] rounded-full transition-colors duration-200"
+          >
+            <XMarkIcon className="w-6 h-6 text-[#a9b1d6] hover:text-[#7aa2f7]" />
           </button>
         </div>
-        <div className="space-y-4">{children}</div>
+        <div className="space-y-5">{children}</div>
       </div>
     </div>
   );
