@@ -105,35 +105,45 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
       {/* Assignment Header */}
       <div className="p-6">
         <div className="bg-[#24283b] p-6 mb-6 rounded-lg">
-          <h1 className="text-3xl font-bold mb-4">{assignment.title}</h1>
-          <div className="flex items-center gap-6 text-base">
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400">Assignment type:</span>
-              <span className="px-2 py-1 rounded-full bg-[#7c5cff]/20 text-[#b845ff]">{assignment.type}</span>
+          <div className="flex justify-between items-start">
+            <div>
+              <h1 className="text-3xl font-bold mb-4">{assignment.title}</h1>
+              <div className="flex items-center gap-6 text-base">
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400">Assignment type:</span>
+                  <span className="px-2 py-1 rounded-full bg-[#7c5cff]/20 text-[#b845ff]">{assignment.type}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400">Status:</span>
+                  <span className={`px-2 py-1 rounded-full ${
+                    status === 'submitted' ? 'bg-blue-500/20 text-blue-300' :
+                    status === 'assigned' ? 'bg-yellow-500/20 text-yellow-300' :
+                    status === 'reviewed' ? 'bg-purple-500/20 text-purple-300' :
+                    status === 'completed' ? 'bg-green-500/20 text-green-300' :
+                    'bg-gray-500/20 text-gray-300'
+                  }`}>
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400">Created:</span>
+                  <span className="text-white font-medium">{assignment.createdAt?.toLocaleDateString('th-TH')}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400">Due:</span>
+                  <span className="text-white font-medium">{assignment.dueDate?.toLocaleDateString('th-TH')}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-400">Assigned to:</span>
+                  <span className="text-white font-medium">{assignment.assignedTo}</span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400">Status:</span>
-              <span className={`px-2 py-1 rounded-full ${
-                status === 'submitted' ? 'bg-blue-500/20 text-blue-300' :
-                status === 'assigned' ? 'bg-yellow-500/20 text-yellow-300' :
-                status === 'reviewed' ? 'bg-purple-500/20 text-purple-300' :
-                status === 'completed' ? 'bg-green-500/20 text-green-300' :
-                'bg-gray-500/20 text-gray-300'
-              }`}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400">Created:</span>
-              <span className="text-white font-medium">{assignment.createdAt?.toLocaleDateString('th-TH')}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400">Due:</span>
-              <span className="text-white font-medium">{assignment.dueDate?.toLocaleDateString('th-TH')}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-gray-400">Assigned to:</span>
-              <span className="text-white font-medium">{assignment.assignedTo}</span>
+            <div className="bg-[#1a1b26] rounded-lg px-4 py-2 flex items-center gap-2">
+              <span className="text-gray-400">Point:</span>
+              <span className="text-2xl font-bold text-[#7aa2f7]">8</span>
+              <span className="text-gray-400">/</span>
+              <span className="text-gray-400">10</span>
             </div>
           </div>
         </div>
