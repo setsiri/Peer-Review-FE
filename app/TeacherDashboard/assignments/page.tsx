@@ -32,6 +32,8 @@ interface MasterAssignment {
   createdAt: string;
   updatedAt: string;
   subjectId: string;
+  isGroupAssignment: boolean;
+  dueDate: string;
   subject: {
     id: string;
     name: string;
@@ -136,8 +138,8 @@ export default function AssignmentsPage() {
       const fetchedAssignments = data.map((assignment) => ({
         id: assignment.id,
         title: assignment.title,
-        type: "solo" as "solo" | "group" | "review", // Explicitly cast to the union type
-        dueDate: "", // No dueDate in the response, so leave blank
+        type: (assignment.isGroupAssignment ? "group" : "solo") as "solo" | "group" | "review", // Explicitly cast type
+        dueDate: new Date(assignment.dueDate).toLocaleDateString(), // Format dueDate
         createdAt: new Date(assignment.createdAt).toLocaleDateString(),
         description: assignment.detail,
         assignTo: "all" as "all" | "selected", // Explicitly cast to the union type
@@ -287,6 +289,7 @@ export default function AssignmentsPage() {
         detail: formData.description,
         subjectId: localStorage.getItem("subjectId"),
         isGroupAssignment: assignmentType === "group",
+        dueDate: `${formData.dueDate}T23:59:59+07:00`, // Ensure dueDate is in ISO-8601 format with time 23:59:59
       };
 
       const masterAssignmentSuccess = await createMasterAssignment(
@@ -573,7 +576,7 @@ export default function AssignmentsPage() {
 
       {formData.targetAssignment && (
         <>
-          <div>
+          {/* <div>
             <label className="block text-[#a9b1d6] font-medium mb-2">
               Select Submission to Review
             </label>
@@ -590,7 +593,7 @@ export default function AssignmentsPage() {
                 </option>
               ))}
             </select>
-          </div>
+          </div> */}
 
           <div>
             <label className="block text-[#a9b1d6] font-medium mb-2">
@@ -602,7 +605,6 @@ export default function AssignmentsPage() {
               onChange={handleChange}
               className="w-full px-4 py-2 rounded-lg bg-[#1a1b26] border border-[#2a2e3f] text-white"
             >
-              <option value="random">Random</option>
               <option value="circle">Circle (วนวงแหวน)</option>
               <option value="manual">Manual</option>
             </select>
@@ -630,18 +632,20 @@ export default function AssignmentsPage() {
         </>
       )}
 
-      <div>
-        <label className="block text-[#a9b1d6] font-medium mb-2">
-          Due Date
-        </label>
-        <input
-          type="date"
-          name="dueDate"
-          value={formData.dueDate}
-          onChange={handleChange}
-          className="w-full px-4 py-2 rounded-lg bg-[#1a1b26] border border-[#2a2e3f] text-white"
-        />
-      </div>
+      {formData.targetAssignment && (
+        <div>
+          <label className="block text-[#a9b1d6] font-medium mb-2">
+            Due Date
+          </label>
+          <input
+            type="date"
+            name="dueDate"
+            value={formData.dueDate}
+            onChange={handleChange}
+            className="w-full px-4 py-2 rounded-lg bg-[#1a1b26] border border-[#2a2e3f] text-white"
+          />
+        </div>
+      )}
     </div>
   );
 
