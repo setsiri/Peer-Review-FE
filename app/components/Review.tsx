@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useCreateReview } from "@/app/services/assignments";
+import { CreateReviewRequest } from "@/app/types/review";
 
 interface Comment {
   id: string;
@@ -16,16 +18,18 @@ interface Review {
 }
 
 interface ReviewProps {
+  assignmentId: string;
   reviews: Review[];
 }
 
-const Review: React.FC<ReviewProps> = ({ reviews: initialReviews }) => {
+const Review: React.FC<ReviewProps> = ({ assignmentId, reviews: initialReviews }) => {
   const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
   const [reviews, setReviews] = useState<Review[]>(initialReviews);
   const [newReview, setNewReview] = useState('');
   const [newComment, setNewComment] = useState('');
-  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  // const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const {mutateAsync: createReview, isPending: isPendingCreateReview} = useCreateReview()
 
   const handleReviewClick = (reviewId: string) => {
     setSelectedReviewId(selectedReviewId === reviewId ? null : reviewId);
@@ -37,23 +41,16 @@ const Review: React.FC<ReviewProps> = ({ reviews: initialReviews }) => {
   const handleAddReview = async () => {
     if (!newReview.trim()) return;
 
-    setIsSubmittingReview(true);
     try {
-      // TODO: ในอนาคตจะส่ง API request ไปที่ backend
-      const newReviewObj: Review = {
-        id: (reviews.length + 1).toString(),
+      const newReviewObj: CreateReviewRequest = {
         content: newReview,
-        author: 'ผู้ใช้ปัจจุบัน', // TODO: ใช้ชื่อจริงของผู้ใช้
-        createdAt: new Date(),
-        comments: []
+        assignmentId
       };
+      await createReview(newReviewObj)
 
-      setReviews([...reviews, newReviewObj]);
       setNewReview('');
     } catch (error) {
       console.error('Error adding review:', error);
-    } finally {
-      setIsSubmittingReview(false);
     }
   };
 
@@ -97,10 +94,10 @@ const Review: React.FC<ReviewProps> = ({ reviews: initialReviews }) => {
       minute: '2-digit',
       hour12: false
     };
-    
+
     const thaiDate = date.toLocaleDateString('th-TH', dateOptions);
     const thaiTime = date.toLocaleTimeString('th-TH', timeOptions);
-    
+
     return `${thaiDate} ${thaiTime} น.`;
   };
 
@@ -111,7 +108,7 @@ const Review: React.FC<ReviewProps> = ({ reviews: initialReviews }) => {
         <div className="p-6">
           <h2 className="text-2xl font-medium text-[#7c5cff]">Reviews</h2>
         </div>
-        
+
         {/* Reviews List */}
         <div className="flex-1 overflow-y-auto px-6 custom-scrollbar">
           <div className="space-y-4 pr-2">
@@ -155,13 +152,13 @@ const Review: React.FC<ReviewProps> = ({ reviews: initialReviews }) => {
           />
           <button
             onClick={handleAddReview}
-            disabled={isSubmittingReview || !newReview.trim()}
+            disabled={isPendingCreateReview || !newReview.trim()}
             className={`w-full py-2.5 px-4 rounded-lg font-medium transition-colors
-              ${isSubmittingReview || !newReview.trim()
+              ${isPendingCreateReview || !newReview.trim()
                 ? 'bg-gray-600 cursor-not-allowed'
                 : 'bg-[#7c5cff] hover:bg-[#6f51e6]'}`}
           >
-            {isSubmittingReview ? 'กำลังส่ง...' : 'เพิ่ม Review'}
+            {isPendingCreateReview ? 'กำลังส่ง...' : 'เพิ่ม Review'}
           </button>
         </div>
       </div>
@@ -170,7 +167,7 @@ const Review: React.FC<ReviewProps> = ({ reviews: initialReviews }) => {
       <div className="bg-[#24283b] rounded-lg flex flex-col h-[900px]">
         <div className="p-6">
           <h2 className="text-2xl font-medium text-[#7c5cff]">
-            {selectedReview 
+            {selectedReview
               ? `ความคิดเห็นสำหรับ Review ของ ${selectedReview.author}`
               : 'กรุณาเลือก Review เพื่อดูความคิดเห็น'}
           </h2>
@@ -257,4 +254,4 @@ const Review: React.FC<ReviewProps> = ({ reviews: initialReviews }) => {
   );
 };
 
-export default Review; 
+export default Review;

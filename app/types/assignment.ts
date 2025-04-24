@@ -16,4 +16,4 @@ export interface CodeSubmission {
   assignmentId: string;
   userId: string;
   submittedAt: Date;
-} 
+}

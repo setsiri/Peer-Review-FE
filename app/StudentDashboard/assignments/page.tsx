@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
+import { useAssignments } from '@/app/services/assignments';
 
 interface Assignment {
   id: string;
@@ -21,34 +22,44 @@ export default function AssignmentsPage() {
   const [sortBy, setSortBy] = useState<SortType>('dueDate');
   const [showType, setShowType] = useState<ShowType>('all');
   const [filter, setFilter] = useState<'all' | 'submitted' | 'assigned' | 'reviewed' | 'completed'>('all');
+  const { data: assignmentsResponse } = useAssignments();
 
-  const assignments: Assignment[] = [
-    {
-      id: '1',
-      title: 'Assignment - Solo 1',
-      type: 'solo',
-      dueDate: '2024-03-31',
-      createdAt: '2024-03-01',
-      status: 'assigned'
-    },
-    {
-      id: '2',
-      title: 'Assignment - Project Group 1',
-      type: 'group',
-      dueDate: '2024-03-29',
-      createdAt: '2024-03-01',
-      status: 'submitted'
-    },
-    {
-      id: '3',
-      title: 'Assignment - Review Solo 1',
-      type: 'review',
-      target: 'Student A',
-      dueDate: '2024-03-28',
-      createdAt: '2024-03-01',
-      status: 'completed'
-    }
-  ];
+  const assignments: Assignment[] = assignmentsResponse?.map(assignmentResponse => ({
+    id: assignmentResponse.id,
+    title: assignmentResponse.content,
+    type: 'solo',
+    dueDate: '2024-03-31',
+    createdAt: assignmentResponse.createdAt,
+    status: 'assigned',
+  })) || [];
+
+  //   [
+  //   {
+  //     id: '1',
+  //     title: 'Assignment - Solo 1',
+  //     type: 'solo',
+  //     dueDate: '2024-03-31',
+  //     createdAt: '2024-03-01',
+  //     status: 'assigned'
+  //   },
+  //   {
+  //     id: '2',
+  //     title: 'Assignment - Project Group 1',
+  //     type: 'group',
+  //     dueDate: '2024-03-29',
+  //     createdAt: '2024-03-01',
+  //     status: 'submitted'
+  //   },
+  //   {
+  //     id: '3',
+  //     title: 'Assignment - Review Solo 1',
+  //     type: 'review',
+  //     target: 'Student A',
+  //     dueDate: '2024-03-28',
+  //     createdAt: '2024-03-01',
+  //     status: 'completed'
+  //   }
+  // ];
 
   const filteredAndSortedAssignments = [...assignments]
     .filter(assignment => {
@@ -77,10 +88,12 @@ export default function AssignmentsPage() {
     <div className="p-6">
       {/* Header */}
       <div className="mb-8">
-        <div className="bg-gradient-to-r from-[#1e2030] to-[#95a6ba] rounded-full h-[72px] overflow-hidden relative flex items-center">
+        <div
+          className="bg-gradient-to-r from-[#1e2030] to-[#95a6ba] rounded-full h-[72px] overflow-hidden relative flex items-center">
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white/10"></div>
           <div className="flex items-center gap-4 px-6 relative z-10">
-            <div className="w-12 h-12 bg-gradient-to-br from-[#7aa2f7] to-[#a06bff] rounded-2xl flex items-center justify-center">
+            <div
+              className="w-12 h-12 bg-gradient-to-br from-[#7aa2f7] to-[#a06bff] rounded-2xl flex items-center justify-center">
               <ClipboardDocumentListIcon className="w-6 h-6 text-white" />
             </div>
             <h1 className="text-3xl font-semibold text-white translate-y-2">Assignment Dashboard</h1>
@@ -116,9 +129,9 @@ export default function AssignmentsPage() {
                     onClick={() => setSortBy('name')}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
                       ${sortBy === 'name'
-                        ? 'bg-[#456bd6] text-white'
-                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
-                      }`}
+                      ? 'bg-[#456bd6] text-white'
+                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                    }`}
                   >
                     Name (a-z)
                   </button>
@@ -126,9 +139,9 @@ export default function AssignmentsPage() {
                     onClick={() => setSortBy('dueDate')}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
                       ${sortBy === 'dueDate'
-                        ? 'bg-[#456bd6] text-white'
-                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
-                      }`}
+                      ? 'bg-[#456bd6] text-white'
+                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                    }`}
                   >
                     Due Date
                   </button>
@@ -136,9 +149,9 @@ export default function AssignmentsPage() {
                     onClick={() => setSortBy('createdAt')}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
                       ${sortBy === 'createdAt'
-                        ? 'bg-[#456bd6] text-white'
-                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
-                      }`}
+                      ? 'bg-[#456bd6] text-white'
+                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                    }`}
                   >
                     Created Date
                   </button>
@@ -152,9 +165,9 @@ export default function AssignmentsPage() {
                     onClick={() => setShowType('all')}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
                       ${showType === 'all'
-                        ? 'bg-[#456bd6] text-white'
-                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
-                      }`}
+                      ? 'bg-[#456bd6] text-white'
+                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                    }`}
                   >
                     All
                   </button>
@@ -162,9 +175,9 @@ export default function AssignmentsPage() {
                     onClick={() => setShowType('solo')}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
                       ${showType === 'solo'
-                        ? 'bg-[#9ece6a] text-white'
-                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
-                      }`}
+                      ? 'bg-[#9ece6a] text-white'
+                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                    }`}
                   >
                     Solo
                   </button>
@@ -172,9 +185,9 @@ export default function AssignmentsPage() {
                     onClick={() => setShowType('group')}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
                       ${showType === 'group'
-                        ? 'bg-[#7aa2f7] text-white'
-                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
-                      }`}
+                      ? 'bg-[#7aa2f7] text-white'
+                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                    }`}
                   >
                     Group
                   </button>
@@ -182,9 +195,9 @@ export default function AssignmentsPage() {
                     onClick={() => setShowType('review')}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
                       ${showType === 'review'
-                        ? 'bg-[#bb9af7] text-white'
-                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
-                      }`}
+                      ? 'bg-[#bb9af7] text-white'
+                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                    }`}
                   >
                     Review
                   </button>
@@ -198,9 +211,9 @@ export default function AssignmentsPage() {
                     onClick={() => setFilter('all')}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
                       ${filter === 'all'
-                        ? 'bg-[#456bd6] text-white'
-                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
-                      }`}
+                      ? 'bg-[#456bd6] text-white'
+                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                    }`}
                   >
                     All
                   </button>
@@ -208,9 +221,9 @@ export default function AssignmentsPage() {
                     onClick={() => setFilter('submitted')}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
                       ${filter === 'submitted'
-                        ? 'bg-[#7aa2f7] text-white'
-                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
-                      }`}
+                      ? 'bg-[#7aa2f7] text-white'
+                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                    }`}
                   >
                     Submitted
                   </button>
@@ -218,9 +231,9 @@ export default function AssignmentsPage() {
                     onClick={() => setFilter('assigned')}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
                       ${filter === 'assigned'
-                        ? 'bg-[#e0af68] text-white'
-                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
-                      }`}
+                      ? 'bg-[#e0af68] text-white'
+                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                    }`}
                   >
                     Assigned
                   </button>
@@ -228,9 +241,9 @@ export default function AssignmentsPage() {
                     onClick={() => setFilter('reviewed')}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
                       ${filter === 'reviewed'
-                        ? 'bg-[#bb9af7] text-white'
-                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
-                      }`}
+                      ? 'bg-[#bb9af7] text-white'
+                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                    }`}
                   >
                     Reviewed
                   </button>
@@ -238,9 +251,9 @@ export default function AssignmentsPage() {
                     onClick={() => setFilter('completed')}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
                       ${filter === 'completed'
-                        ? 'bg-[#9ece6a] text-white'
-                        : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
-                      }`}
+                      ? 'bg-[#9ece6a] text-white'
+                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                    }`}
                   >
                     Completed
                   </button>
@@ -270,17 +283,17 @@ export default function AssignmentsPage() {
                 <div className="flex items-center gap-3">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium
                     ${assignment.type === 'solo' ? 'bg-[#9ece6a]/10 text-[#9ece6a]' :
-                      assignment.type === 'group' ? 'bg-[#7aa2f7]/10 text-[#7aa2f7]' :
+                    assignment.type === 'group' ? 'bg-[#7aa2f7]/10 text-[#7aa2f7]' :
                       'bg-[#bb9af7]/10 text-[#bb9af7]'}`}
                   >
                     {assignment.type}
                   </span>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                     assignment.status === 'submitted' ? 'bg-[#7aa2f7]/10 text-[#7aa2f7]' :
-                    assignment.status === 'assigned' ? 'bg-[#e0af68]/10 text-[#e0af68]' :
-                    assignment.status === 'reviewed' ? 'bg-[#bb9af7]/10 text-[#bb9af7]' :
-                    assignment.status === 'completed' ? 'bg-[#9ece6a]/10 text-[#9ece6a]' :
-                    'bg-[#f7768e]/10 text-[#f7768e]'
+                      assignment.status === 'assigned' ? 'bg-[#e0af68]/10 text-[#e0af68]' :
+                        assignment.status === 'reviewed' ? 'bg-[#bb9af7]/10 text-[#bb9af7]' :
+                          assignment.status === 'completed' ? 'bg-[#9ece6a]/10 text-[#9ece6a]' :
+                            'bg-[#f7768e]/10 text-[#f7768e]'
                   }`}>
                     {assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
                   </span>
@@ -292,4 +305,4 @@ export default function AssignmentsPage() {
       </div>
     </div>
   );
-} 
+}

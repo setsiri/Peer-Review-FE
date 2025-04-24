@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from "react";
 import Editor from '@monaco-editor/react';
 
 interface CodeEditorProps {
@@ -6,6 +6,7 @@ interface CodeEditorProps {
   language?: string;
   onChange?: (code: string) => void;
   height?: string | number;
+  code? : string;
 }
 
 export default function CodeEditor({
@@ -13,12 +14,19 @@ export default function CodeEditor({
   language = 'python',
   onChange,
   height = '400px',
+  code,
 }: CodeEditorProps) {
-  const [code, setCode] = useState(initialCode);
+  const [codeValue, setCodeValue] = useState<string>(initialCode);
+
+  useEffect(() => {
+    if (code) {
+      setCodeValue(code)
+    }
+  }, [code]);
 
   const handleChange = (value: string | undefined) => {
     const newCode = value || '';
-    setCode(newCode);
+    setCodeValue(newCode);
     onChange?.(newCode);
   };
 
@@ -28,7 +36,7 @@ export default function CodeEditor({
         height="100%"
         defaultLanguage={language}
         theme="vs-dark"
-        value={code}
+        value={codeValue}
         onChange={handleChange}
         options={{
           fontSize: 14,
@@ -42,4 +50,4 @@ export default function CodeEditor({
       />
     </div>
   );
-} 
+}
