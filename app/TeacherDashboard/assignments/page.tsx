@@ -3,26 +3,15 @@
 import { useState, useEffect } from "react";
 import { ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import Loader from "@/app/components/Loader";
 
 interface Assignment {
   id: string;
   title: string;
   type: "solo" | "group" | "review";
-  target?: string;
   dueDate: string;
   createdAt: string;
   description?: string;
-  starterCode?: string;
-  reviewerMethod?: string;
-  status?:
-    | "ASSIGNED"
-    | "SUBMITTED"
-    | "READY_TO_REVIEW"
-    | "IN_REVIEW"
-    | "REVIEWED"
-    | "COMPLETED";
-  assignTo: "all" | "selected";
-  selectedIds?: string[];
 }
 
 interface MasterAssignment {
@@ -42,35 +31,83 @@ interface MasterAssignment {
   };
 }
 
-interface Student {
+interface SubmittedWork {
+  assigneeId: string;
   id: string;
   name: string;
-  status:
-    | "ASSIGNED"
-    | "SUBMITTED"
-    | "READY_TO_REVIEW"
-    | "IN_REVIEW"
-    | "REVIEWED"
-    | "COMPLETED";
-}
-
-interface Group {
-  id: string;
-  name: string;
-  members: Student[];
-  status?:
-    | "ASSIGNED"
-    | "SUBMITTED"
-    | "READY_TO_REVIEW"
-    | "IN_REVIEW"
-    | "REVIEWED"
-    | "COMPLETED";
+  status?: string;
 }
 
 type ShowType = "all" | "solo" | "group" | "review";
 type SortType = "name" | "dueDate" | "createdAt";
+type AssignmentType = "solo" | "group" | "review";
+type ReviewerMethod = "random" | "circle" | "manual";
+type CreateAssignmentStep = 1 | 2;
 
-async function createMasterAssignment(data: any, token: string) {
+interface CreateAssignmentFormData {
+  title: string;
+  description: string;
+  dueDate: string;
+  reviewerMethod: ReviewerMethod;
+  targetAssignment: string;
+  targetSubmission: string;
+  targetReviewer: string;
+}
+
+// --- API Fetching Functions ---
+async function fetchMasterAssignments(
+  token: string
+): Promise<MasterAssignment[]> {
+  const response = await fetch("http://localhost:3000/master-assignments", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    throw new Error("Failed to fetch master assignments");
+  }
+  return response.json();
+}
+
+async function fetchSubmissionsForAssignment(
+  assignmentId: string,
+  token: string
+): Promise<any[]> {
+  const response = await fetch(
+    `http://localhost:3000/assignment/submitted-assignments/${assignmentId}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  if (!response.ok) {
+    console.error(`Failed to fetch submissions for assignment ${assignmentId}`);
+    return [];
+  }
+  return response.json();
+}
+
+async function fetchAllStudents(token: string): Promise<any[]> {
+  const response = await fetch("http://localhost:3000/users/students", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    console.error("Failed to fetch students");
+    return [];
+  }
+  return response.json();
+}
+
+async function fetchAllGroups(token: string): Promise<any[]> {
+  const response = await fetch("http://localhost:3000/group", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) {
+    console.error("Failed to fetch groups");
+    return [];
+  }
+  return response.json();
+}
+
+async function createMasterAssignmentAPI(
+  data: any,
+  token: string
+): Promise<boolean> {
   const response = await fetch("http://localhost:3000/master-assignments", {
     method: "POST",
     headers: {
@@ -79,182 +116,125 @@ async function createMasterAssignment(data: any, token: string) {
     },
     body: JSON.stringify(data),
   });
-
   if (!response.ok) {
     throw new Error("Failed to create master assignment");
   }
+  return true;
+}
 
+async function createReviewAssignmentAPI(
+  submissionId: string,
+  payload: any,
+  token: string
+): Promise<boolean> {
+  const response = await fetch(
+    `http://localhost:3000/assignment/assign-reviewers/${submissionId}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    }
+  );
+  if (!response.ok) {
+    throw new Error("Failed to create review assignment");
+  }
   return true;
 }
 
 export default function AssignmentsPage() {
+  const [isLoading, setIsLoading] = useState(false);
   const [toggleRefresh, setToggleRefresh] = useState(false);
   const [sortBy, setSortBy] = useState<SortType>("dueDate");
   const [showType, setShowType] = useState<ShowType>("all");
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [step, setStep] = useState<1 | 2>(1);
-  const [assignmentType, setAssignmentType] = useState<
-    "solo" | "group" | "review"
-  >("solo");
-  const [formData, setFormData] = useState({
+  const [step, setStep] = useState<CreateAssignmentStep>(1);
+  const [assignmentType, setAssignmentType] = useState<AssignmentType>("solo");
+  const [formData, setFormData] = useState<CreateAssignmentFormData>({
     title: "",
     description: "",
-    starterCode: "",
     dueDate: "",
-    assignTo: "all",
-    selectedIds: [] as string[],
-    reviewerMethod: "random" as "random" | "circle" | "manual",
+    reviewerMethod: "random",
     targetAssignment: "",
     targetSubmission: "",
+    targetReviewer: "",
   });
   const [availableAssignments, setAvailableAssignments] = useState<
     Assignment[]
   >([]);
-  const [submittedWork, setSubmittedWork] = useState<
-    Array<{ id: string; name: string; status: string }>
-  >([]);
-  const [students, setStudents] = useState<Student[]>([]);
-  const [groups, setGroups] = useState<Group[]>([]);
+  const [submittedWork, setSubmittedWork] = useState<SubmittedWork[]>([]);
+  const [isReviewAssignmentGroup, setReviewAssignmentGroup] = useState(false);
 
-  const fetchAssignments = async () => {
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        throw new Error("No access token found");
+  // --- Fetch and Process Assignments ---
+  const fetchAssignmentsData = async (token: string) => {
+    const masters = await fetchMasterAssignments(token);
+
+    const allAssignments: Assignment[] = masters.map((m) => ({
+      id: m.id,
+      title: m.title,
+      type: (m.isGroupAssignment ? "group" : "solo") as Assignment["type"],
+      dueDate: new Date(m.dueDate).toLocaleDateString(),
+      createdAt: new Date(m.createdAt).toLocaleDateString(),
+      description: m.detail,
+    }));
+
+    const validAssignments: Assignment[] = [];
+    for (const m of masters) {
+      const submissions = await fetchSubmissionsForAssignment(m.id, token);
+      if (submissions.length > 0) {
+        validAssignments.push({
+          id: m.id,
+          title: m.title,
+          type: m.isGroupAssignment ? "group" : "solo",
+          dueDate: new Date(m.dueDate).toISOString().split("T")[0],
+          createdAt: new Date(m.createdAt).toISOString().split("T")[0],
+          description: m.detail,
+        } as Assignment);
       }
-
-      const response = await fetch("http://localhost:3000/master-assignments", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch assignments");
-      }
-
-      const data: MasterAssignment[] = await response.json();
-      const fetchedAssignments = data.map((assignment) => ({
-        id: assignment.id,
-        title: assignment.title,
-        type: (assignment.isGroupAssignment ? "group" : "solo") as "solo" | "group" | "review", // Explicitly cast type
-        dueDate: new Date(assignment.dueDate).toLocaleDateString(), // Format dueDate
-        createdAt: new Date(assignment.createdAt).toLocaleDateString(),
-        description: assignment.detail,
-        assignTo: "all" as "all" | "selected", // Explicitly cast to the union type
-      }));
-      setAssignments(fetchedAssignments);
-    } catch (error) {
-      console.error("Error fetching assignments:", error);
     }
+
+    return { allAssignments, validAssignments };
   };
 
   useEffect(() => {
-    fetchAssignments();
-
-    // Mock data สำหรับ assignments ที่มีสถานะ SUBMITTED
-    const mockAssignments: Assignment[] = [
-      {
-        id: "1",
-        title: "Assignment - Solo 1",
-        type: "solo",
-        dueDate: "2024-03-28",
-        description: "โจทย์ที่ 1",
-        status: "SUBMITTED",
-        createdAt: "2024-03-01",
-        assignTo: "all",
-      },
-      {
-        id: "2",
-        title: "Assignment - Solo 2",
-        type: "solo",
-        dueDate: "2024-03-29",
-        description: "โจทย์ที่ 2",
-        status: "SUBMITTED",
-        createdAt: "2024-03-01",
-        assignTo: "all",
-      },
-    ];
-
-    // Mock data สำหรับนักเรียนที่ส่งงานแล้ว
-    const mockStudents: Student[] = [
-      { id: "1", name: "นักเรียน 1", status: "ASSIGNED" },
-      { id: "2", name: "นักเรียน 2", status: "ASSIGNED" },
-      { id: "3", name: "นักเรียน 3", status: "ASSIGNED" },
-    ];
-
-    setAvailableAssignments(mockAssignments);
-    setStudents(mockStudents);
-
-    // Mock groups
-    setGroups([
-      {
-        id: "g1",
-        name: "กลุ่ม 1",
-        members: [{ id: "1", name: "นักเรียน 1", status: "ASSIGNED" }],
-        status: "ASSIGNED",
-      },
-      {
-        id: "g2",
-        name: "กลุ่ม 2",
-        members: [{ id: "2", name: "นักเรียน 2", status: "ASSIGNED" }],
-        status: "ASSIGNED",
-      },
-    ]);
-
-    setAvailableAssignments([
-      {
-        id: "a1",
-        title: "Assignment 1",
-        type: "solo",
-        dueDate: "2024-03-28",
-        createdAt: "2024-03-01",
-        assignTo: "all",
-        description: "โจทย์ที่ 1",
-      },
-    ]);
-  }, [toggleRefresh]);
-
-  useEffect(() => {
-    const fetchData = async () => {
+    const loadAssignments = async () => {
+      setIsLoading(true);
       try {
         const token = localStorage.getItem("accessToken");
         if (!token) {
-          throw new Error("No access token found");
+          console.error("No access token found");
+          return;
         }
+        const { allAssignments, validAssignments } = await fetchAssignmentsData(
+          token
+        );
+        setAssignments(allAssignments);
+        setAvailableAssignments(validAssignments);
       } catch (error) {
-        console.error("Error fetching groups or students:", error);
+        console.error("Error fetching assignments:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
+    loadAssignments();
+  }, [toggleRefresh]);
 
-  useEffect(() => {
-    if (formData.targetAssignment) {
-      // Mock submitted work data based on selected assignment
-      setSubmittedWork([
-        { id: "s1", name: "นักเรียน 1", status: "SUBMITTED" },
-        { id: "s2", name: "นักเรียน 2", status: "SUBMITTED" },
-      ]);
-    }
-  }, [formData.targetAssignment]);
-
-  const handleTypeSelect = (type: "solo" | "group" | "review") => {
+  // --- Event Handlers ---
+  const handleTypeSelect = (type: AssignmentType) => {
     setAssignmentType(type);
     setStep(2);
-    // Reset form data when changing type
     setFormData({
       title: "",
       description: "",
-      starterCode: "",
       dueDate: "",
-      assignTo: "all",
-      selectedIds: [],
       reviewerMethod: "random",
       targetAssignment: "",
       targetSubmission: "",
+      targetReviewer: "",
     });
   };
 
@@ -267,47 +247,86 @@ export default function AssignmentsPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleCheckboxChange = (id: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      selectedIds: prev.selectedIds.includes(id)
-        ? prev.selectedIds.filter((selectedId) => selectedId !== id)
-        : [...prev.selectedIds, id],
-    }));
-  };
-
   const handleCreateAssignment = async () => {
+    setIsLoading(true);
     try {
       const token = localStorage.getItem("accessToken");
       if (!token) {
-        throw new Error("No access token found");
+        console.error("No access token found");
+        return;
       }
 
-      // Create master assignment
-      const masterAssignmentPayload = {
-        title: formData.title,
-        detail: formData.description,
-        subjectId: localStorage.getItem("subjectId"),
-        isGroupAssignment: assignmentType === "group",
-        dueDate: `${formData.dueDate}T23:59:59+07:00`, // Ensure dueDate is in ISO-8601 format with time 23:59:59
-      };
-
-      const masterAssignmentSuccess = await createMasterAssignment(
-        masterAssignmentPayload,
-        token
-      );
-
-      if (!masterAssignmentSuccess) {
-        throw new Error("Failed to create master assignment");
+      if (assignmentType !== "review") {
+        const masterAssignmentPayload = {
+          title: formData.title,
+          detail: formData.description,
+          subjectId: localStorage.getItem("subjectId"),
+          isGroupAssignment: assignmentType === "group",
+          dueDate: `${formData.dueDate}T23:59:59+07:00`,
+        };
+        await createMasterAssignmentAPI(masterAssignmentPayload, token);
+      } else {
+        const reviewAssignmentPayload = {
+          groupId: isReviewAssignmentGroup ? formData.targetReviewer : "",
+          userId: isReviewAssignmentGroup ? "" : formData.targetReviewer,
+          isGroupAssignment: isReviewAssignmentGroup,
+        };
+        await createReviewAssignmentAPI(
+          formData.targetSubmission,
+          reviewAssignmentPayload,
+          token
+        );
       }
 
       setIsCreateModalOpen(false);
-      setToggleRefresh(!toggleRefresh); // Refresh the assignments list
+      setToggleRefresh(!toggleRefresh);
     } catch (error) {
       console.error("Error creating assignment:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const handleSelectAssignmentToReview = async (selectedId: string) => {
+    if (!selectedId) return;
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem("accessToken");
+      if (!token) {
+        console.error("No access token found");
+        return;
+      }
+
+      const [submittedAssignments, allStudents, allGroups] = await Promise.all([
+        fetchSubmissionsForAssignment(selectedId, token),
+        fetchAllStudents(token),
+        fetchAllGroups(token),
+      ]);
+
+      const studentMap = new Map(
+        allStudents.map((s: any) => [s.id, `${s.firstName} ${s.lastName}`])
+      );
+      const groupMap = new Map(allGroups.map((g: any) => [g.id, g.name]));
+
+      const firstSubmission = submittedAssignments[0];
+      setReviewAssignmentGroup(!!firstSubmission?.groupId);
+
+      const enrichedSubmissions: SubmittedWork[] = submittedAssignments.map(
+        (a: any) => ({
+          id: a.id,
+          name: a.userId ? studentMap.get(a.userId) : groupMap.get(a.groupId),
+          assigneeId: a.userId ? a.userId : a.groupId,
+        })
+      );
+      setSubmittedWork(enrichedSubmissions);
+    } catch (error) {
+      console.error("Error fetching review assignment data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // --- UI Rendering Logic ---
   const filteredAndSortedAssignments = [...assignments]
     .filter((assignment) =>
       showType === "all" ? true : assignment.type === showType
@@ -336,15 +355,12 @@ export default function AssignmentsPage() {
         {["solo", "group", "review"].map((type) => (
           <button
             key={type}
-            onClick={() =>
-              handleTypeSelect(type as "solo" | "group" | "review")
-            }
-            className={`p-4 rounded-lg border-2 transition-colors
-              ${
-                assignmentType === type
-                  ? "border-[#7aa2f7] bg-[#7aa2f7]/10"
-                  : "border-[#2a2e3f] hover:border-[#7aa2f7]/50"
-              }`}
+            onClick={() => handleTypeSelect(type as AssignmentType)}
+            className={`p-4 rounded-lg border-2 transition-colors ${
+              assignmentType === type
+                ? "border-[#7aa2f7] bg-[#7aa2f7]/10"
+                : "border-[#2a2e3f] hover:border-[#7aa2f7]/50"
+            }`}
           >
             <div className="text-lg font-medium text-white capitalize">
               {type}
@@ -369,7 +385,6 @@ export default function AssignmentsPage() {
           className="w-full px-4 py-2 rounded-lg bg-[#1a1b26] border border-[#2a2e3f] text-white"
         />
       </div>
-
       <div>
         <label className="block text-[#a9b1d6] font-medium mb-2">
           Description
@@ -382,20 +397,6 @@ export default function AssignmentsPage() {
           className="w-full px-4 py-2 rounded-lg bg-[#1a1b26] border border-[#2a2e3f] text-white"
         />
       </div>
-
-      {/* <div>
-        <label className="block text-[#a9b1d6] font-medium mb-2">
-          Starter Code
-        </label>
-        <textarea
-          name="starterCode"
-          value={formData.starterCode}
-          onChange={handleChange}
-          rows={4}
-          className="w-full px-4 py-2 rounded-lg bg-[#1a1b26] border border-[#2a2e3f] text-white font-mono"
-        />
-      </div> */}
-
       <div>
         <label className="block text-[#a9b1d6] font-medium mb-2">
           Due Date
@@ -408,147 +409,11 @@ export default function AssignmentsPage() {
           className="w-full px-4 py-2 rounded-lg bg-[#1a1b26] border border-[#2a2e3f] text-white"
         />
       </div>
-
-      {/* <div>
-        <label className="block text-[#a9b1d6] font-medium mb-2">
-          Assign To
-        </label>
-        <div className="space-y-2">
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="assignTo"
-              value="all"
-              checked={formData.assignTo === "all"}
-              onChange={handleChange}
-            />
-            <span className="text-white">All Students</span>
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="assignTo"
-              value="selected"
-              checked={formData.assignTo === "selected"}
-              onChange={handleChange}
-            />
-            <span className="text-white">Selected Students</span>
-          </label>
-        </div>
-        {formData.assignTo === "selected" && (
-          <div className="mt-4 space-y-2 max-h-40 overflow-y-auto">
-            {students.map((student) => (
-              <label key={student.id} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.selectedIds.includes(student.id)}
-                  onChange={() => handleCheckboxChange(student.id)}
-                />
-                <span className="text-white">{student.name}</span>
-              </label>
-            ))}
-          </div>
-        )}
-      </div> */}
     </div>
   );
 
   const renderGroupForm = () => (
-    <div className="space-y-6">
-      <div>
-        <label className="block text-[#a9b1d6] font-medium mb-2">
-          Assignment Title
-        </label>
-        <input
-          type="text"
-          name="title"
-          value={formData.title}
-          onChange={handleChange}
-          className="w-full px-4 py-2 rounded-lg bg-[#1a1b26] border border-[#2a2e3f] text-white"
-        />
-      </div>
-
-      <div>
-        <label className="block text-[#a9b1d6] font-medium mb-2">
-          Description
-        </label>
-        <textarea
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          rows={4}
-          className="w-full px-4 py-2 rounded-lg bg-[#1a1b26] border border-[#2a2e3f] text-white"
-        />
-      </div>
-
-      {/* <div>
-        <label className="block text-[#a9b1d6] font-medium mb-2">
-          Starter Code
-        </label>
-        <textarea
-          name="starterCode"
-          value={formData.starterCode}
-          onChange={handleChange}
-          rows={4}
-          className="w-full px-4 py-2 rounded-lg bg-[#1a1b26] border border-[#2a2e3f] text-white font-mono"
-        />
-      </div> */}
-
-      <div>
-        <label className="block text-[#a9b1d6] font-medium mb-2">
-          Due Date
-        </label>
-        <input
-          type="date"
-          name="dueDate"
-          value={formData.dueDate}
-          onChange={handleChange}
-          className="w-full px-4 py-2 rounded-lg bg-[#1a1b26] border border-[#2a2e3f] text-white"
-        />
-      </div>
-
-      {/* <div>
-        <label className="block text-[#a9b1d6] font-medium mb-2">
-          Assign To
-        </label>
-        <div className="space-y-2">
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="assignTo"
-              value="all"
-              checked={formData.assignTo === "all"}
-              onChange={handleChange}
-            />
-            <span className="text-white">All Groups</span>
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="assignTo"
-              value="selected"
-              checked={formData.assignTo === "selected"}
-              onChange={handleChange}
-            />
-            <span className="text-white">Selected Groups</span>
-          </label>
-        </div>
-        {formData.assignTo === "selected" && (
-          <div className="mt-4 space-y-2 max-h-40 overflow-y-auto">
-            {groups.map((group) => (
-              <label key={group.id} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.selectedIds.includes(group.id)}
-                  onChange={() => handleCheckboxChange(group.id)}
-                />
-                <span className="text-white">{group.name}</span>
-              </label>
-            ))}
-          </div>
-        )}
-      </div> */}
-    </div>
+    <div className="space-y-6">{renderSoloForm()}</div>
   );
 
   const renderReviewForm = () => (
@@ -560,10 +425,13 @@ export default function AssignmentsPage() {
         <select
           name="targetAssignment"
           value={formData.targetAssignment}
-          onChange={handleChange}
+          onChange={(e) => {
+            handleChange(e);
+            handleSelectAssignmentToReview(e.target.value);
+          }}
           className="w-full px-4 py-2 rounded-lg bg-[#1a1b26] border border-[#2a2e3f] text-white"
         >
-          <option value="">เลือก Assignment</option>
+          <option value="">- Select master assignment -</option>
           {availableAssignments
             .filter((a) => a.type !== "review")
             .map((assignment) => (
@@ -573,12 +441,11 @@ export default function AssignmentsPage() {
             ))}
         </select>
       </div>
-
       {formData.targetAssignment && (
         <>
-          {/* <div>
+          <div>
             <label className="block text-[#a9b1d6] font-medium mb-2">
-              Select Submission to Review
+              Select Submission Assignee
             </label>
             <select
               name="targetSubmission"
@@ -586,15 +453,14 @@ export default function AssignmentsPage() {
               onChange={handleChange}
               className="w-full px-4 py-2 rounded-lg bg-[#1a1b26] border border-[#2a2e3f] text-white"
             >
-              <option value="">เลือกงานที่ส่งแล้ว</option>
+              <option value="">- Select submission assignee -</option>
               {submittedWork.map((work) => (
                 <option key={work.id} value={work.id}>
                   {work.name}
                 </option>
               ))}
             </select>
-          </div> */}
-
+          </div>
           <div>
             <label className="block text-[#a9b1d6] font-medium mb-2">
               Reviewer Assignment Method
@@ -609,42 +475,30 @@ export default function AssignmentsPage() {
               <option value="manual">Manual</option>
             </select>
           </div>
-
           {formData.reviewerMethod === "manual" && (
             <div>
               <label className="block text-[#a9b1d6] font-medium mb-2">
                 Select Reviewers
               </label>
-              <div className="mt-4 space-y-2 max-h-40 overflow-y-auto">
-                {students.map((student) => (
-                  <label key={student.id} className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={formData.selectedIds.includes(student.id)}
-                      onChange={() => handleCheckboxChange(student.id)}
-                    />
-                    <span className="text-white">{student.name}</span>
-                  </label>
-                ))}
-              </div>
+              <select
+                name="targetReviewer"
+                value={formData.targetReviewer}
+                onChange={handleChange}
+                className="w-full px-4 py-2 rounded-lg bg-[#1a1b26] border border-[#2a2e3f] text-white"
+              >
+                <option value="">- Select reviewer -</option>
+                {submittedWork.map(
+                  (work) =>
+                    work.id !== formData.targetSubmission && (
+                      <option key={work.id} value={work.assigneeId}>
+                        {work.name}
+                      </option>
+                    )
+                )}
+              </select>
             </div>
           )}
         </>
-      )}
-
-      {formData.targetAssignment && (
-        <div>
-          <label className="block text-[#a9b1d6] font-medium mb-2">
-            Due Date
-          </label>
-          <input
-            type="date"
-            name="dueDate"
-            value={formData.dueDate}
-            onChange={handleChange}
-            className="w-full px-4 py-2 rounded-lg bg-[#1a1b26] border border-[#2a2e3f] text-white"
-          />
-        </div>
       )}
     </div>
   );
@@ -654,7 +508,7 @@ export default function AssignmentsPage() {
       {/* Header */}
       <div className="mb-8">
         <div className="bg-gradient-to-r from-[#1e2030] to-[#95a6ba] rounded-full h-[72px] overflow-hidden relative flex items-center">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white/10"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white/10" />
           <div className="flex items-center gap-4 px-6 relative z-10">
             <div className="w-12 h-12 bg-gradient-to-br from-[#7aa2f7] to-[#a06bff] rounded-2xl flex items-center justify-center">
               <ClipboardDocumentListIcon className="w-6 h-6 text-white" />
@@ -678,40 +532,36 @@ export default function AssignmentsPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setSortBy("name")}
-                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                      ${
-                        sortBy === "name"
-                          ? "bg-[#456bd6] text-white"
-                          : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
-                      }`}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors ${
+                      sortBy === "name"
+                        ? "bg-[#456bd6] text-white"
+                        : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
+                    }`}
                   >
                     Name (a-z)
                   </button>
                   <button
                     onClick={() => setSortBy("dueDate")}
-                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                      ${
-                        sortBy === "dueDate"
-                          ? "bg-[#456bd6] text-white"
-                          : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
-                      }`}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors ${
+                      sortBy === "dueDate"
+                        ? "bg-[#456bd6] text-white"
+                        : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
+                    }`}
                   >
                     Due Date
                   </button>
                   <button
                     onClick={() => setSortBy("createdAt")}
-                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                      ${
-                        sortBy === "createdAt"
-                          ? "bg-[#456bd6] text-white"
-                          : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
-                      }`}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors ${
+                      sortBy === "createdAt"
+                        ? "bg-[#456bd6] text-white"
+                        : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
+                    }`}
                   >
                     Created Date
                   </button>
                 </div>
               </div>
-
               <div className="flex items-center gap-3">
                 <span className="text-[#a9b1d6] text-sm font-medium">
                   Show:
@@ -719,45 +569,41 @@ export default function AssignmentsPage() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => setShowType("all")}
-                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                      ${
-                        showType === "all"
-                          ? "bg-[#456bd6] text-white"
-                          : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
-                      }`}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors ${
+                      showType === "all"
+                        ? "bg-[#456bd6] text-white"
+                        : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
+                    }`}
                   >
                     All
                   </button>
                   <button
                     onClick={() => setShowType("solo")}
-                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                      ${
-                        showType === "solo"
-                          ? "bg-[#9ece6a] text-white"
-                          : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
-                      }`}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors ${
+                      showType === "solo"
+                        ? "bg-[#9ece6a] text-white"
+                        : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
+                    }`}
                   >
                     Solo
                   </button>
                   <button
                     onClick={() => setShowType("group")}
-                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                      ${
-                        showType === "group"
-                          ? "bg-[#7aa2f7] text-white"
-                          : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
-                      }`}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors ${
+                      showType === "group"
+                        ? "bg-[#7aa2f7] text-white"
+                        : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
+                    }`}
                   >
                     Group
                   </button>
                   <button
                     onClick={() => setShowType("review")}
-                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                      ${
-                        showType === "review"
-                          ? "bg-[#bb9af7] text-white"
-                          : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
-                      }`}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-colors ${
+                      showType === "review"
+                        ? "bg-[#bb9af7] text-white"
+                        : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
+                    }`}
                   >
                     Review
                   </button>
@@ -795,8 +641,7 @@ export default function AssignmentsPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span
-                    className={`px-3 py-1 rounded-full text-xs font-medium
-                    ${
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
                       assignment.type === "solo"
                         ? "bg-[#9ece6a]/10 text-[#9ece6a]"
                         : assignment.type === "group"
@@ -856,6 +701,7 @@ export default function AssignmentsPage() {
           </div>
         </div>
       )}
+      <Loader visible={isLoading} />
     </div>
   );
 }
