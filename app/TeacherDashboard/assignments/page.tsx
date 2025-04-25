@@ -523,8 +523,8 @@ export default function AssignmentsPage() {
               onChange={handleChange}
               className="w-full px-4 py-2 rounded-lg bg-[#1a1b26] border border-[#2a2e3f] text-white"
             >
-              <option value="circle">Circle (วนวงแหวน)</option>
               <option value="manual">Manual</option>
+              <option value="circle">Circle (วนวงแหวน)</option>
             </select>
           </div>
           {formData.reviewerMethod === "manual" && (
