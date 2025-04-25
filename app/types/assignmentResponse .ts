@@ -39,6 +39,7 @@ export interface AssignmentResponse {
   masterAssignment: MasterAssignment;
   userId: string;
   user: User;
+  group: Group;
   groupId: string;
   createdAt: string;
   updatedAt: string;
@@ -52,4 +53,11 @@ export interface AssignmentSubmitRequest {
 
 export interface ScoreAssignmentRequest {
   score: number;
+}
+
+export interface Group {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
 }

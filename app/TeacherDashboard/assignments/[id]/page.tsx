@@ -194,7 +194,9 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
                 className="p-6 hover:bg-[#1a1b26] transition-colors flex items-center justify-between"
               >
                 <div>
-                  <h3 className="text-[#a9b1d6] font-medium">{getFullName(assignment.user)}</h3>
+                  <h3 className="text-[#a9b1d6] font-medium">
+                    {masterAssignment?.isGroupAssignment ? assignment?.group?.name : getFullName(assignment.user)}
+                  </h3>
                 </div>
                 <div className="flex items-center gap-3">
                   {assignment.type == AssignmentType.SUBMISSION && (
