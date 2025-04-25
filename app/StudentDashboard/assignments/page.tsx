@@ -272,9 +272,9 @@ export default function AssignmentsPage() {
                     assignment.groupId ? "bg-[#7aa2f7]/10 text-[#7aa2f7]" :
                       "bg-[#bb9af7]/10 text-[#bb9af7]"}`}
                   >
-                    {!assignment.groupId && !assignment.previousAssignmentId && "solo"}
-                    {assignment.groupId && "group"}
-                    {assignment.previousAssignmentId && "review"}
+                    {!assignment.groupId && !assignment.previousAssignmentId ? "solo" :
+                      assignment.previousAssignmentId ? "review" :
+                        assignment.groupId ? "group" : ""}
                   </span>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                     assignment.status === AssignmentStatus.SUBMITTED ? "bg-[#7aa2f7]/10 text-[#7aa2f7]" :
