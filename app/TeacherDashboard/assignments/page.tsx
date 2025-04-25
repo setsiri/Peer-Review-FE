@@ -54,6 +54,11 @@ interface CreateAssignmentFormData {
   targetReviewer: string;
 }
 
+interface AvailableReviewers {
+  groups: any[];
+  users: any[];
+}
+
 // --- API Fetching Functions ---
 async function fetchMasterAssignments(
   token: string
@@ -144,6 +149,23 @@ async function createReviewAssignmentAPI(
   return true;
 }
 
+async function fetchAvailableReviewers(
+  token: string,
+  assignmentId: string
+): Promise<AvailableReviewers> {
+  const response = await fetch(
+    `http://localhost:3000/assignment/available-reviewers/${assignmentId}`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    }
+  );
+  if (!response.ok) {
+    console.error("Failed to fetch reviewers");
+    throw new Error("Failed to fetch reviewers");
+  }
+  return response.json();
+}
+
 export default function AssignmentsPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [toggleRefresh, setToggleRefresh] = useState(false);
@@ -167,6 +189,12 @@ export default function AssignmentsPage() {
   >([]);
   const [submittedWork, setSubmittedWork] = useState<SubmittedWork[]>([]);
   const [isReviewAssignmentGroup, setReviewAssignmentGroup] = useState(false);
+  const [availableReviewers, setAvailableReviewers] =
+    useState<AvailableReviewers>({
+      groups: [],
+      users: [],
+    });
+  const [isAssignGroupReviewer, setIsAssignGroupReviewer] = useState(false);
 
   // --- Fetch and Process Assignments ---
   const fetchAssignmentsData = async (token: string) => {
@@ -221,7 +249,7 @@ export default function AssignmentsPage() {
     };
 
     loadAssignments();
-  }, [toggleRefresh]);
+  }, [toggleRefresh, formData.targetSubmission]);
 
   // --- Event Handlers ---
   const handleTypeSelect = (type: AssignmentType) => {
@@ -238,13 +266,37 @@ export default function AssignmentsPage() {
     });
   };
 
-  const handleChange = (
+  const handleChange = async (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
     >
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Fetch available reviewers when targetSubmission is updated
+    if (name === "targetSubmission" && value) {
+      try {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+          console.error("No access token found");
+          return;
+        }
+
+        const { groups, users } = await fetchAvailableReviewers(token, value);
+        setAvailableReviewers({ groups, users });
+      } catch (error) {
+        console.error("Error fetching available reviewers:", error);
+      }
+    }
+
+    // Set reviewer type based on selection
+    if (name === "targetReviewer") {
+      const isGroupReviewer = availableReviewers.groups.some(
+        (group) => group.id === value
+      );
+      setIsAssignGroupReviewer(isGroupReviewer);
+    }
   };
 
   const handleCreateAssignment = async () => {
@@ -267,9 +319,9 @@ export default function AssignmentsPage() {
         await createMasterAssignmentAPI(masterAssignmentPayload, token);
       } else {
         const reviewAssignmentPayload = {
-          groupId: isReviewAssignmentGroup ? formData.targetReviewer : "",
-          userId: isReviewAssignmentGroup ? "" : formData.targetReviewer,
-          isGroupAssignment: isReviewAssignmentGroup,
+          groupId: isAssignGroupReviewer ? formData.targetReviewer : "",
+          userId: !isAssignGroupReviewer ? formData.targetReviewer : "",
+          isGroupAssignment: isAssignGroupReviewer,
         };
         await createReviewAssignmentAPI(
           formData.targetSubmission,
@@ -487,14 +539,20 @@ export default function AssignmentsPage() {
                 className="w-full px-4 py-2 rounded-lg bg-[#1a1b26] border border-[#2a2e3f] text-white"
               >
                 <option value="">- Select reviewer -</option>
-                {submittedWork.map(
-                  (work) =>
-                    work.id !== formData.targetSubmission && (
-                      <option key={work.id} value={work.assigneeId}>
-                        {work.name}
-                      </option>
-                    )
-                )}
+                {availableReviewers.groups.map((group) => {
+                  return (
+                    <option key={group.id} value={group.id}>
+                      {`[ Group ]: ${group.name}`}
+                    </option>
+                  );
+                })}
+                {availableReviewers.users.map((user) => {
+                  return (
+                    <option key={user.id} value={user.id}>
+                      {`${user.firstName} ${user.lastName}`}
+                    </option>
+                  );
+                })}
               </select>
             </div>
           )}
