@@ -22,7 +22,6 @@ const ReviewsSection: React.FC<ReviewProps> = ({ assignment }) => {
     setNewComment(""); // เคลียร์ค่า comment เมื่อเปลี่ยน review
   };
 
-  console.log(reviews[0]);
   const selectedReview = reviews.find(review => review.id === selectedReviewId);
 
   const handleAddReview = async () => {
