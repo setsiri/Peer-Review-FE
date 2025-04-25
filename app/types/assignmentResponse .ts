@@ -1,3 +1,5 @@
+import { Review, User } from "./review";
+
 // Assignment Status enum
 export enum AssignmentStatus {
   ASSIGNED = "ASSIGNED",
@@ -34,11 +36,13 @@ export interface AssignmentResponse {
   content: string;
   previousAssignmentId: string | null;
   masterId: string;
+  masterAssignment: MasterAssignment;
   userId: string;
+  user: User;
   groupId: string;
   createdAt: string;
   updatedAt: string;
-  masterAssignment: MasterAssignment;
+  reviews: Review[];
 }
 
 export interface AssignmentSubmitRequest {

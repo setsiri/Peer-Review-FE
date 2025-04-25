@@ -1,92 +1,35 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import CodeEditor from "../../../components/CodeEditor";
-import Review from "../../../components/Review";
+import ReviewsSection from "../../../components/ReviewsSection";
 import { Assignment } from "@/app/types/assignment";
 import Link from "next/link";
-import { useAssignment, useAssignmentReviews, useCreateReview, useSubmitAssignment } from "@/app/services/assignments";
+import {
+  useAssignment,
+  useAssignmentReviews,
+  useCreateComment,
+  useCreateReview,
+  useSubmitAssignment
+} from "@/app/services/assignments";
+import { getAssignmentType } from "@/app/utils/assignmentUtils";
+import { AssignmentStatus, AssignmentType } from "@/app/types/assignmentResponse ";
 
 export default function AssignmentPage({ params }: { params: { id: string } }) {
-  const router = useRouter();
   const assignmentId = params.id;
   const [code, setCode] = useState("// เขียนคำตอบของคุณที่นี่\n");
   const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState<"submitted" | "assigned" | "reviewed" | "completed">("assigned");
-  const [lastSubmittedTime, setLastSubmittedTime] = useState<Date | null>(null);
-  const { data: assignmentResponse } = useAssignment(assignmentId);
-  const { data: assignmentReviews } = useAssignmentReviews(assignmentId);
+  const { data: assignment } = useAssignment(assignmentId);
   const { mutateAsync: submitAssignment, isPending: isPendingSubmitAssignment } = useSubmitAssignment();
 
   useEffect(() => {
-    setCode(assignmentResponse?.content || "// เขียนคำตอบของคุณที่นี่\n");
-    if (assignmentResponse?.updatedAt) {
-      setLastSubmittedTime(new Date(assignmentResponse.updatedAt));
-    }
-  }, [assignmentResponse]);
-
-  // Mock assignment data - ในอนาคตควรดึงจาก API
-  const assignment: Assignment = {
-    id: params.id,
-    title: "Assignment - ชื่อ assignment",
-    description: "คำอธิบายโจทย์จะแสดงที่นี่...",
-    type: "solo",
-    status: status,
-    createdAt: new Date("2024-01-01"),
-    dueDate: new Date("2024-12-31"),
-    assignedTo: "ชื่อนักเรียน"
-  };
-
-  // Mock review data
-  const mockReviews = [
-    {
-      id: "1",
-      content: "โค้ดมีการจัดรูปแบบที่ดี และใช้ชื่อตัวแปรที่สื่อความหมาย",
-      author: "อาจารย์ A",
-      createdAt: new Date("2024-03-15"),
-      comments: [
-        {
-          id: "1",
-          content: "ควรเพิ่ม comment อธิบายการทำงานของฟังก์ชันด้วย",
-          author: "นักศึกษา B",
-          createdAt: new Date("2024-03-16")
-        },
-        {
-          id: "2",
-          content: "เห็นด้วยครับ จะปรับปรุงให้ดีขึ้น",
-          author: "นักศึกษา A",
-          createdAt: new Date("2024-03-16")
-        }
-      ]
-    },
-    {
-      id: "2",
-      content: "การแก้ปัญหายังไม่มีประสิทธิภาพเท่าที่ควร ควรพิจารณาใช้อัลกอริทึมที่ดีกว่านี้",
-      author: "อาจารย์ B",
-      createdAt: new Date("2024-03-17"),
-      comments: [
-        {
-          id: "3",
-          content: "รบกวนแนะนำแนวทางการปรับปรุงเพิ่มเติมด้วยครับ",
-          author: "นักศึกษา A",
-          createdAt: new Date("2024-03-17")
-        }
-      ]
-    }
-  ];
+    setCode(assignment?.content || "// เขียนคำตอบของคุณที่นี่\n");
+  }, [assignment]);
 
   const handleSubmit = async () => {
     try {
       setError(null);
-
-      // TODO: Implement actual submission logic
-      console.log("Submitting code:", code);
-
       await submitAssignment({ id: assignmentId, data: { content: code } });
-
-      setStatus("submitted");
-      setLastSubmittedTime(new Date());
     } catch (err) {
       setError("เกิดข้อผิดพลาดในการส่งคำตอบ กรุณาลองใหม่อีกครั้ง");
       console.error("Submission error:", err);
@@ -112,35 +55,38 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
       {/* Assignment Header */}
       <div className="p-6">
         <div className="bg-[#24283b] p-6 mb-6 rounded-lg">
-          <h1 className="text-3xl font-bold mb-4">{assignment.title}</h1>
+          <h1 className="text-3xl font-bold mb-4">{assignment?.masterAssignment.title}</h1>
           <div className="flex items-center gap-6 text-base">
             <div className="flex items-center gap-2">
               <span className="text-gray-400">Assignment type:</span>
-              <span className="px-2 py-1 rounded-full bg-[#7c5cff]/20 text-[#b845ff]">{assignment.type}</span>
+              <span
+                className="px-2 py-1 rounded-full bg-[#7c5cff]/20 text-[#b845ff]">{getAssignmentType(assignment)}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-gray-400">Status:</span>
               <span className={`px-2 py-1 rounded-full ${
-                status === "submitted" ? "bg-blue-500/20 text-blue-300" :
-                  status === "assigned" ? "bg-yellow-500/20 text-yellow-300" :
-                    status === "reviewed" ? "bg-purple-500/20 text-purple-300" :
-                      status === "completed" ? "bg-green-500/20 text-green-300" :
+                assignment?.status === AssignmentStatus.SUBMITTED ? "bg-blue-500/20 text-blue-300" :
+                  assignment?.status === AssignmentStatus.ASSIGNED ? "bg-yellow-500/20 text-yellow-300" :
+                    assignment?.status === AssignmentStatus.REVIEWED ? "bg-purple-500/20 text-purple-300" :
+                      assignment?.status === AssignmentStatus.COMPLETED ? "bg-green-500/20 text-green-300" :
                         "bg-gray-500/20 text-gray-300"
               }`}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
+                {assignment?.status && (assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1))}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-gray-400">Created:</span>
-              <span className="text-white font-medium">{assignment.createdAt?.toLocaleDateString("th-TH")}</span>
+              <span
+                className="text-white font-medium">{new Date(assignment?.createdAt || "")?.toLocaleDateString("th-TH")}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-gray-400">Due:</span>
-              <span className="text-white font-medium">{assignment.dueDate?.toLocaleDateString("th-TH")}</span>
+              <span
+                className="text-white font-medium">{new Date(assignment?.masterAssignment?.dueDate || "")?.toLocaleDateString("th-TH")}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-gray-400">Assigned to:</span>
-              <span className="text-white font-medium">{assignment.assignedTo}</span>
+              <span className="text-white font-medium">{assignment?.user.firstName}</span>
             </div>
           </div>
         </div>
@@ -149,7 +95,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
         <div className="bg-[#24283b] p-6 mb-1">
           <h2 className="text-xl font-medium mb-4 text-[#7c5cff]">Problem</h2>
           <div className="prose prose-invert max-w-none">
-            <p className="text-[#a9b1d6]">{assignment.description}</p>
+            <p className="text-[#a9b1d6]">{assignment?.masterAssignment.detail}</p>
           </div>
         </div>
 
@@ -170,7 +116,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
 
           <div className="flex justify-end items-center gap-4 mt-4">
             <div className="text-sm text-gray-400">
-              {lastSubmittedTime && `Last submitted: ${lastSubmittedTime.toLocaleString("th-TH")}`}
+              {assignment?.updatedAt && `Last submitted: ${new Date(assignment.updatedAt).toLocaleString("th-TH")}`}
             </div>
             <button
               onClick={handleSubmit}
@@ -186,7 +132,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
 
         {/* Reviews Section */}
         <div className="p-6">
-          <Review assignmentId={assignmentId} reviews={mockReviews} />
+          <ReviewsSection assignmentId={assignmentId} reviews={assignment?.reviews || []} />
         </div>
       </div>
     </div>

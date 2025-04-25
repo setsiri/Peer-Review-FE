@@ -1,9 +1,9 @@
-import { authAxios } from '@/app/lib/axios';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AssignmentResponse, AssignmentSubmitRequest } from '@/app/types/assignmentResponse ';
-import { CreateReviewRequest } from '../types/review';
+import { authAxios } from "@/app/lib/axios";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AssignmentResponse, AssignmentSubmitRequest } from "@/app/types/assignmentResponse ";
+import { CreateCommentRequest, CreateReviewRequest } from "../types/review";
 
-const BASE_URL = '/assignment';
+const BASE_URL = "/assignment";
 
 export const getAssignments = async () => {
   const response = await authAxios.get<AssignmentResponse[]>(BASE_URL);
@@ -12,8 +12,8 @@ export const getAssignments = async () => {
 
 export const useAssignments = () => {
   return useQuery({
-    queryKey: ['assignments'],
-    queryFn: () => getAssignments(),
+    queryKey: ["assignments"],
+    queryFn: () => getAssignments()
   });
 };
 
@@ -24,8 +24,8 @@ export const getAssignment = async (assignmentId: string) => {
 
 export const useAssignment = (assignmentId: string) => {
   return useQuery({
-    queryKey: ['assignments', assignmentId],
-    queryFn: () => getAssignment(assignmentId),
+    queryKey: ["assignments", assignmentId],
+    queryFn: () => getAssignment(assignmentId)
   });
 };
 
@@ -36,14 +36,14 @@ export const getAssignmentReviews = async (assignmentId: string) => {
 
 export const useAssignmentReviews = (assignmentId: string) => {
   return useQuery({
-    queryKey: ['assignmentReviews', assignmentId],
+    queryKey: ["assignmentReviews", assignmentId],
     queryFn: () => getAssignmentReviews(assignmentId),
-    enabled: !!assignmentId, // Only run when ID is available
+    enabled: !!assignmentId // Only run when ID is available
   });
 };
 
 export const createReview = async (reviewData: CreateReviewRequest) => {
-  const response = await authAxios.post('/review', reviewData);
+  const response = await authAxios.post("/review", reviewData);
   return response.data;
 };
 
@@ -56,9 +56,9 @@ export const useCreateReview = () => {
     onSuccess: (data, variables) => {
       // Invalidate relevant queries to refetch data
       queryClient.invalidateQueries({
-        queryKey: ['assignmentReviews', variables.assignmentId],
+        queryKey: ["assignmentReviews", variables.assignmentId]
       });
-    },
+    }
   });
 };
 
@@ -75,7 +75,26 @@ export const useSubmitAssignment = () => {
       submitAssignment(id, data),
     onSuccess: (_, data) => {
       // Invalidate queries to refresh assignment data
-      queryClient.invalidateQueries({ queryKey: ['assignments', data.id] });
-    },
+      queryClient.invalidateQueries({ queryKey: ["assignments", data.id] });
+    }
+  });
+};
+
+export const createComment = async (commentData: CreateCommentRequest) => {
+  const response = await authAxios.post("/comment", commentData);
+  return response.data;
+};
+
+export const useCreateComment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: { commentData: CreateCommentRequest, assignmentId: string }) =>
+      createComment(payload.commentData),
+    onSuccess: (data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["assignments", variables.assignmentId]
+      });
+    }
   });
 };
