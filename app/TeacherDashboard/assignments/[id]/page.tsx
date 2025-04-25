@@ -12,10 +12,12 @@ import { getFullName } from "@/app/utils/userUtils";
 import { getAssignmentStatus } from "@/app/utils/assignmentUtils";
 import { Rating } from "@mui/material";
 import { AssignmentResponse, AssignmentStatus, AssignmentType } from "@/app/types/assignmentResponse ";
+import { useRouter } from "next/navigation";
 
 type SortType = "asc" | "desc";
 
 export default function AssignmentPage({ params }: { params: { id: string } }) {
+  const router = useRouter();
   const masterAssignmentId = params.id;
   const [sortBy, setSortBy] = useState<SortType>("asc");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -76,6 +78,10 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
       console.error("Error updating assignment score:", error);
       // You could add an error notification here if needed
     }
+  };
+
+  const handleAssignmentClick = (assigmentId: string) => {
+    router.push(`/TeacherDashboard/assignments/${masterAssignmentId}/assignment/${assigmentId}`);
   };
 
   return (
@@ -191,7 +197,8 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
             {filteredAndSortedAssignments?.map((assignment) => (
               <div
                 key={assignment.id}
-                className="p-6 hover:bg-[#1a1b26] transition-colors flex items-center justify-between"
+                className="p-6 hover:bg-[#1a1b26] transition-colors flex items-center justify-between cursor-pointer"
+                onClick={() => handleAssignmentClick(assignment.id)}
               >
                 <div>
                   <h3 className="text-[#a9b1d6] font-medium">
@@ -200,22 +207,24 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
                 </div>
                 <div className="flex items-center gap-3">
                   {assignment.type == AssignmentType.SUBMISSION && (
-                    <Rating
-                      value={assignment.score || 0}
-                      disabled={assignment.status !== AssignmentStatus.REVIEWED}
-                      onChange={(_, value) => handleScoreChange(assignment, value)}
-                      sx={{
-                        "& .MuiRating-iconFilled": {
-                          color: "#f59e0b" // Amber/gold color for filled stars
-                        },
-                        "& .MuiRating-iconEmpty": {
-                          color: "rgba(255, 255, 255, 0.3)" // Lighter color for empty stars
-                        },
-                        "&.Mui-disabled": {
-                          opacity: 0.5 // Better visibility for disabled state
-                        }
-                      }}
-                    />
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <Rating
+                        value={assignment.score || 0}
+                        disabled={assignment.status !== AssignmentStatus.REVIEWED}
+                        onChange={(event, value) => handleScoreChange(assignment, value)}
+                        sx={{
+                          "& .MuiRating-iconFilled": {
+                            color: "#f59e0b" // Amber/gold color for filled stars
+                          },
+                          "& .MuiRating-iconEmpty": {
+                            color: "rgba(255, 255, 255, 0.3)" // Lighter color for empty stars
+                          },
+                          "&.Mui-disabled": {
+                            opacity: 0.5 // Better visibility for disabled state
+                          }
+                        }}
+                      />
+                    </div>
                   )}
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium ${getTypeColor(assignment.type)} text-white`}>
