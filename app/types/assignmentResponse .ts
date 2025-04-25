@@ -1,15 +1,17 @@
 // Assignment Status enum
 export enum AssignmentStatus {
-  ASSIGNED = 'ASSIGNED',
-  COMPLETED = 'COMPLETED',
-  SUBMITTED = 'SUBMITTED',
-  IN_REVIEW = 'IN_REVIEW'
+  ASSIGNED = "ASSIGNED",
+  SUBMITTED = "SUBMITTED",
+  READY_TO_REVIEW = "READY_TO_REVIEW",
+  IN_REVIEW = "IN_REVIEW",
+  REVIEWED = "REVIEWED",
+  COMPLETED = "COMPLETED",
 }
 
 // Assignment Type enum
 export enum AssignmentType {
-  SUBMISSION = 'SUBMISSION',
-  REVIEW = 'REVIEW'
+  SUBMISSION = "SUBMISSION",
+  REVIEW = "REVIEW"
 }
 
 // Master Assignment type
@@ -20,6 +22,8 @@ export interface MasterAssignment {
   createdAt: string;
   updatedAt: string;
   subjectId: string;
+  isGroupAssignment: boolean,
+  dueDate: string,
 }
 
 // Main Assignment type

@@ -20,7 +20,6 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
   const { mutateAsync: submitAssignment, isPending: isPendingSubmitAssignment } = useSubmitAssignment();
 
   useEffect(() => {
-    console.log(assignmentResponse?.content);
     setCode(assignmentResponse?.content || "// เขียนคำตอบของคุณที่นี่\n");
     if (assignmentResponse?.updatedAt) {
       setLastSubmittedTime(new Date(assignmentResponse.updatedAt));

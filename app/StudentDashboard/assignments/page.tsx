@@ -1,88 +1,72 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
-import Link from 'next/link';
-import { useAssignments } from '@/app/services/assignments';
+import { useState } from "react";
+import { ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
+import { useAssignments } from "@/app/services/assignments";
+import { AssignmentStatus } from "@/app/types/assignmentResponse ";
 
-interface Assignment {
-  id: string;
-  title: string;
-  type: 'solo' | 'group' | 'review';
-  target?: string;
-  dueDate: string;
-  createdAt: string;
-  status: 'submitted' | 'assigned' | 'reviewed' | 'completed';
-}
-
-type ShowType = 'all' | 'solo' | 'group' | 'review';
-type SortType = 'name' | 'dueDate' | 'createdAt';
+type ShowType = "all" | "solo" | "group" | "review";
+type SortType = "name" | "dueDate" | "createdAt";
 
 export default function AssignmentsPage() {
-  const [sortBy, setSortBy] = useState<SortType>('dueDate');
-  const [showType, setShowType] = useState<ShowType>('all');
-  const [filter, setFilter] = useState<'all' | 'submitted' | 'assigned' | 'reviewed' | 'completed'>('all');
-  const { data: assignmentsResponse } = useAssignments();
+  const [sortBy, setSortBy] = useState<SortType>("dueDate");
+  const [showType, setShowType] = useState<ShowType>("all");
+  const [filter, setFilter] = useState<"all" | "submitted" | "assigned" | "reviewed" | "completed">("all");
+  const { data: assignments } = useAssignments();
+  const assignmentPendingTaskCount = assignments?.filter(assignment => assignment.status === AssignmentStatus.ASSIGNED).length || 0;
+  const assignmentInProgressCount = assignments?.filter(assignment => assignment.status === AssignmentStatus.SUBMITTED).length || 0;
+  const assignmentCompletedCount = assignments?.filter(assignment => assignment.status === AssignmentStatus.COMPLETED).length || 0;
 
-  const assignments: Assignment[] = assignmentsResponse?.map(assignmentResponse => ({
-    id: assignmentResponse.id,
-    title: assignmentResponse.content,
-    type: 'solo',
-    dueDate: '2024-03-31',
-    createdAt: assignmentResponse.createdAt,
-    status: 'assigned',
-  })) || [];
+  const filteredAndSortedAssignments = assignments?.filter(assignment => {
+    // Type filtering (all, solo, group, review)
+    const matchesType =
+      showType === "all" ||
+      (showType === "solo" && !assignment.groupId && !assignment.previousAssignmentId) ||
+      (showType === "group" && !!assignment.groupId) ||
+      (showType === "review" && !!assignment.previousAssignmentId);
 
-  //   [
-  //   {
-  //     id: '1',
-  //     title: 'Assignment - Solo 1',
-  //     type: 'solo',
-  //     dueDate: '2024-03-31',
-  //     createdAt: '2024-03-01',
-  //     status: 'assigned'
-  //   },
-  //   {
-  //     id: '2',
-  //     title: 'Assignment - Project Group 1',
-  //     type: 'group',
-  //     dueDate: '2024-03-29',
-  //     createdAt: '2024-03-01',
-  //     status: 'submitted'
-  //   },
-  //   {
-  //     id: '3',
-  //     title: 'Assignment - Review Solo 1',
-  //     type: 'review',
-  //     target: 'Student A',
-  //     dueDate: '2024-03-28',
-  //     createdAt: '2024-03-01',
-  //     status: 'completed'
-  //   }
-  // ];
+    // Status filtering (all, submitted, assigned, reviewed, completed)
+    const matchesStatus =
+      filter === "all" ||
+      (filter === "submitted" && assignment.status === AssignmentStatus.SUBMITTED) ||
+      (filter === "assigned" && assignment.status === AssignmentStatus.ASSIGNED) ||
+      (filter === "reviewed" && assignment.status === AssignmentStatus.REVIEWED) ||
+      (filter === "completed" && assignment.status === AssignmentStatus.COMPLETED);
 
-  const filteredAndSortedAssignments = [...assignments]
-    .filter(assignment => {
-      if (showType !== 'all' && assignment.type !== showType) return false;
-      if (filter === 'all') return true;
-      if (filter === 'submitted') return assignment.status === 'submitted';
-      if (filter === 'assigned') return assignment.status === 'assigned';
-      if (filter === 'reviewed') return assignment.status === 'reviewed';
-      if (filter === 'completed') return assignment.status === 'completed';
-      return false;
-    })
+    // Assignment must match both type and status filters
+    return matchesType && matchesStatus;
+  })
     .sort((a, b) => {
       switch (sortBy) {
-        case 'name':
-          return a.title.localeCompare(b.title);
-        case 'dueDate':
-          return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-        case 'createdAt':
+        case "name":
+          return a.masterAssignment.title.localeCompare(b.masterAssignment.title);
+        case "dueDate":
+          return new Date(a.masterAssignment.dueDate).getTime() - new Date(b.masterAssignment.dueDate).getTime();
+        case "createdAt":
           return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
         default:
           return 0;
       }
     });
+
+  const formatDateTime = (date: Date) => {
+    const dateOptions: Intl.DateTimeFormatOptions = {
+      day: "numeric",
+      month: "numeric",
+      year: "numeric"
+    };
+    const timeOptions: Intl.DateTimeFormatOptions = {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    };
+
+    const thaiDate = date.toLocaleDateString("th-TH", dateOptions);
+    const thaiTime = date.toLocaleTimeString("th-TH", timeOptions);
+
+    return `${thaiDate} ${thaiTime} น.`;
+  };
 
   return (
     <div className="p-6">
@@ -105,15 +89,15 @@ export default function AssignmentsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-[#24283b] p-6 rounded-lg">
           <h3 className="text-[#787c99] text-sm">Pending Tasks</h3>
-          <p className="text-[#f7768e] text-2xl font-bold mt-1">2</p>
+          <p className="text-[#f7768e] text-2xl font-bold mt-1">{assignmentPendingTaskCount}</p>
         </div>
         <div className="bg-[#24283b] p-6 rounded-lg">
           <h3 className="text-[#787c99] text-sm">In Progress</h3>
-          <p className="text-[#e0af68] text-2xl font-bold mt-1">1</p>
+          <p className="text-[#e0af68] text-2xl font-bold mt-1">{assignmentInProgressCount}</p>
         </div>
         <div className="bg-[#24283b] p-6 rounded-lg">
           <h3 className="text-[#787c99] text-sm">Completed</h3>
-          <p className="text-[#9ece6a] text-2xl font-bold mt-1">3</p>
+          <p className="text-[#9ece6a] text-2xl font-bold mt-1">{assignmentCompletedCount}</p>
         </div>
       </div>
 
@@ -126,31 +110,31 @@ export default function AssignmentsPage() {
                 <span className="text-[#a9b1d6] text-sm font-medium">Sort by:</span>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setSortBy('name')}
+                    onClick={() => setSortBy("name")}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                      ${sortBy === 'name'
-                      ? 'bg-[#456bd6] text-white'
-                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      ${sortBy === "name"
+                      ? "bg-[#456bd6] text-white"
+                      : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
                     }`}
                   >
                     Name (a-z)
                   </button>
                   <button
-                    onClick={() => setSortBy('dueDate')}
+                    onClick={() => setSortBy("dueDate")}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                      ${sortBy === 'dueDate'
-                      ? 'bg-[#456bd6] text-white'
-                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      ${sortBy === "dueDate"
+                      ? "bg-[#456bd6] text-white"
+                      : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
                     }`}
                   >
                     Due Date
                   </button>
                   <button
-                    onClick={() => setSortBy('createdAt')}
+                    onClick={() => setSortBy("createdAt")}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                      ${sortBy === 'createdAt'
-                      ? 'bg-[#456bd6] text-white'
-                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      ${sortBy === "createdAt"
+                      ? "bg-[#456bd6] text-white"
+                      : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
                     }`}
                   >
                     Created Date
@@ -162,41 +146,41 @@ export default function AssignmentsPage() {
                 <span className="text-[#a9b1d6] text-sm font-medium">Show:</span>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setShowType('all')}
+                    onClick={() => setShowType("all")}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                      ${showType === 'all'
-                      ? 'bg-[#456bd6] text-white'
-                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      ${showType === "all"
+                      ? "bg-[#456bd6] text-white"
+                      : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
                     }`}
                   >
                     All
                   </button>
                   <button
-                    onClick={() => setShowType('solo')}
+                    onClick={() => setShowType("solo")}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                      ${showType === 'solo'
-                      ? 'bg-[#9ece6a] text-white'
-                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      ${showType === "solo"
+                      ? "bg-[#9ece6a] text-white"
+                      : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
                     }`}
                   >
                     Solo
                   </button>
                   <button
-                    onClick={() => setShowType('group')}
+                    onClick={() => setShowType("group")}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                      ${showType === 'group'
-                      ? 'bg-[#7aa2f7] text-white'
-                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      ${showType === "group"
+                      ? "bg-[#7aa2f7] text-white"
+                      : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
                     }`}
                   >
                     Group
                   </button>
                   <button
-                    onClick={() => setShowType('review')}
+                    onClick={() => setShowType("review")}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                      ${showType === 'review'
-                      ? 'bg-[#bb9af7] text-white'
-                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      ${showType === "review"
+                      ? "bg-[#bb9af7] text-white"
+                      : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
                     }`}
                   >
                     Review
@@ -208,51 +192,51 @@ export default function AssignmentsPage() {
                 <span className="text-[#a9b1d6] text-sm font-medium">Status:</span>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setFilter('all')}
+                    onClick={() => setFilter("all")}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                      ${filter === 'all'
-                      ? 'bg-[#456bd6] text-white'
-                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      ${filter === "all"
+                      ? "bg-[#456bd6] text-white"
+                      : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
                     }`}
                   >
                     All
                   </button>
                   <button
-                    onClick={() => setFilter('submitted')}
+                    onClick={() => setFilter("submitted")}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                      ${filter === 'submitted'
-                      ? 'bg-[#7aa2f7] text-white'
-                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      ${filter === "submitted"
+                      ? "bg-[#7aa2f7] text-white"
+                      : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
                     }`}
                   >
                     Submitted
                   </button>
                   <button
-                    onClick={() => setFilter('assigned')}
+                    onClick={() => setFilter("assigned")}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                      ${filter === 'assigned'
-                      ? 'bg-[#e0af68] text-white'
-                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      ${filter === "assigned"
+                      ? "bg-[#e0af68] text-white"
+                      : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
                     }`}
                   >
                     Assigned
                   </button>
                   <button
-                    onClick={() => setFilter('reviewed')}
+                    onClick={() => setFilter("reviewed")}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                      ${filter === 'reviewed'
-                      ? 'bg-[#bb9af7] text-white'
-                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      ${filter === "reviewed"
+                      ? "bg-[#bb9af7] text-white"
+                      : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
                     }`}
                   >
                     Reviewed
                   </button>
                   <button
-                    onClick={() => setFilter('completed')}
+                    onClick={() => setFilter("completed")}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
-                      ${filter === 'completed'
-                      ? 'bg-[#9ece6a] text-white'
-                      : 'bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]'
+                      ${filter === "completed"
+                      ? "bg-[#9ece6a] text-white"
+                      : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
                     }`}
                   >
                     Completed
@@ -263,7 +247,7 @@ export default function AssignmentsPage() {
           </div>
         </div>
         <div className="divide-y divide-[#1a1b26]">
-          {filteredAndSortedAssignments.map((assignment) => (
+          {filteredAndSortedAssignments?.map((assignment) => (
             <Link
               key={assignment.id}
               href={`/StudentDashboard/assignments/${assignment.id}`}
@@ -271,29 +255,33 @@ export default function AssignmentsPage() {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-[#a9b1d6] font-medium">{assignment.title}</h3>
+                  <h3 className="text-[#a9b1d6] font-medium">{assignment.masterAssignment.title}</h3>
                   <div className="flex items-center gap-4 mt-2">
-                    <span className="text-[#787c99] text-sm">Due: {assignment.dueDate}</span>
-                    <span className="text-[#787c99] text-sm">Created: {assignment.createdAt}</span>
-                    {assignment.target && (
-                      <span className="text-[#787c99] text-sm">Review for: {assignment.target}</span>
+                    <span
+                      className="text-[#787c99] text-sm">Due: {formatDateTime(new Date(assignment.masterAssignment.dueDate))}</span>
+                    <span
+                      className="text-[#787c99] text-sm">Created: {formatDateTime(new Date(assignment.createdAt))}</span>
+                    {assignment.previousAssignmentId && (
+                      <span className="text-[#787c99] text-sm">Review for: test</span>
                     )}
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium
-                    ${assignment.type === 'solo' ? 'bg-[#9ece6a]/10 text-[#9ece6a]' :
-                    assignment.type === 'group' ? 'bg-[#7aa2f7]/10 text-[#7aa2f7]' :
-                      'bg-[#bb9af7]/10 text-[#bb9af7]'}`}
+                    ${!assignment.groupId && !assignment.previousAssignmentId ? "bg-[#9ece6a]/10 text-[#9ece6a]" :
+                    assignment.groupId ? "bg-[#7aa2f7]/10 text-[#7aa2f7]" :
+                      "bg-[#bb9af7]/10 text-[#bb9af7]"}`}
                   >
-                    {assignment.type}
+                    {!assignment.groupId && !assignment.previousAssignmentId && "solo"}
+                    {assignment.groupId && "group"}
+                    {assignment.previousAssignmentId && "review"}
                   </span>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    assignment.status === 'submitted' ? 'bg-[#7aa2f7]/10 text-[#7aa2f7]' :
-                      assignment.status === 'assigned' ? 'bg-[#e0af68]/10 text-[#e0af68]' :
-                        assignment.status === 'reviewed' ? 'bg-[#bb9af7]/10 text-[#bb9af7]' :
-                          assignment.status === 'completed' ? 'bg-[#9ece6a]/10 text-[#9ece6a]' :
-                            'bg-[#f7768e]/10 text-[#f7768e]'
+                    assignment.status === AssignmentStatus.SUBMITTED ? "bg-[#7aa2f7]/10 text-[#7aa2f7]" :
+                      assignment.status === AssignmentStatus.ASSIGNED ? "bg-[#e0af68]/10 text-[#e0af68]" :
+                        assignment.status === AssignmentStatus.REVIEWED ? "bg-[#bb9af7]/10 text-[#bb9af7]" :
+                          assignment.status === AssignmentStatus.COMPLETED ? "bg-[#9ece6a]/10 text-[#9ece6a]" :
+                            "bg-[#f7768e]/10 text-[#f7768e]"
                   }`}>
                     {assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
                   </span>
