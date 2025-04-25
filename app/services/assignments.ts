@@ -24,6 +24,7 @@ export const getAssignment = async (assignmentId: string) => {
 
 export const useAssignment = (assignmentId: string) => {
   return useQuery({
+    enabled: !!assignmentId, // Only run when ID is available
     queryKey: ["assignments", assignmentId],
     queryFn: () => getAssignment(assignmentId)
   });
@@ -56,7 +57,7 @@ export const useCreateReview = () => {
     onSuccess: (data, variables) => {
       // Invalidate relevant queries to refetch data
       queryClient.invalidateQueries({
-        queryKey: ["assignmentReviews", variables.assignmentId]
+        queryKey: ["assignments", variables.assignmentId]
       });
     }
   });

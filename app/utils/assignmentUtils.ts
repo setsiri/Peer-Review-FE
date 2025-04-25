@@ -1,26 +1,38 @@
-import { AssignmentResponse } from "@/app/types/assignmentResponse ";
+import { AssignmentResponse, AssignmentStatus, AssignmentType } from "@/app/types/assignmentResponse ";
 
-export type AssignmentTypeValue = "" | "solo" | "group" | "review";
-
-// Determine if assignment is a solo assignment
-export const isSoloAssignment = (assignment: AssignmentResponse): boolean => {
-  return !assignment.masterAssignment.isGroupAssignment && !assignment.previousAssignmentId;
-};
-
-// Determine if assignment is a group assignment
-export const isGroupAssignment = (assignment: AssignmentResponse): boolean => {
-  return assignment.masterAssignment.isGroupAssignment;
-};
-
-// Determine if assignment is a review assignment
-export const isReviewAssignment = (assignment: AssignmentResponse): boolean => {
-  return !!assignment.previousAssignmentId;
-};
-
-// Get the assignment type value
-export const getAssignmentType = (assignment?: AssignmentResponse): AssignmentTypeValue => {
+export const getAssignmentType = (assignment?: AssignmentResponse) => {
   if (!assignment) return "";
-  if (isReviewAssignment(assignment)) return "review";
-  if (isGroupAssignment(assignment)) return "group";
-  return "solo";
+
+  if (assignment.type === AssignmentType.REVIEW) {
+    return "Review";
+  } else if (assignment.masterAssignment?.isGroupAssignment &&
+    assignment.type === AssignmentType.SUBMISSION) {
+    return "Group";
+  } else if (!assignment.masterAssignment?.isGroupAssignment &&
+    !assignment.previousAssignmentId) {
+    return "Solo";
+  }
+
+  return "";
+};
+
+export const getAssignmentStatus = (status?: AssignmentStatus) => {
+  if (!status) return "";
+  console.log(status);
+
+  if (status === "ASSIGNED") {
+    return "Assigned";
+  } else if (status === "SUBMITTED") {
+    return "Submitted";
+  } else if (status === "READY_TO_REVIEW") {
+    return "Ready to review";
+  } else if (status === "IN_REVIEW") {
+    return "In review";
+  } else if (status === "REVIEWED") {
+    return "Reviewed";
+  } else if (status === "COMPLETED") {
+    return "Completed";
+  }
+
+  return "";
 };

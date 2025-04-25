@@ -7,8 +7,12 @@ import { th } from "date-fns/locale";
 import { BellIcon } from "@heroicons/react/24/outline";
 import { useUser } from "@/app/contexts/UserContext";
 import { useEffect, useState } from "react";
+import { useNotifications } from "@/app/services/notifications";
+import { NotificationType } from "@/app/types/notificaitions";
+import { getNotificationTypeLabel } from "@/app/utils/notificationUtils";
 
 export default function NotificationsPage() {
+  const {data: notifications} = useNotifications()
   const { user } = useUser();
   const [isStudent, setIsStudent] = useState(false);
   useEffect(() => {
@@ -35,7 +39,7 @@ export default function NotificationsPage() {
       </div>
 
       <div className="space-y-4">
-        {(isStudent ? studentNotifications : teacherNotifications).map(
+        {notifications?.map(
           (notification) => (
             <div
               key={notification.id}
@@ -45,27 +49,27 @@ export default function NotificationsPage() {
             >
               <div className="flex justify-between items-start">
                 <div>
-                  <h3 className="text-[#7aa2f7] font-medium">
-                    {notification.title}
-                  </h3>
-                  <p className="text-[#a9b1d6] mt-2">{notification.message}</p>
+                  {/*<h3 className="text-[#7aa2f7] font-medium">*/}
+                  {/*  {notification.title}*/}
+                  {/*</h3>*/}
+                  <p className="text-[#a9b1d6] mt-2">{notification.content}</p>
                 </div>
                 <span
                   className={`px-3 py-1 rounded-full text-sm ${
-                    notification.type === "info"
+                    notification.type === NotificationType.ASSIGN_REVIEW
                       ? "bg-[#1a1b26] text-[#7aa2f7]"
-                      : notification.type === "warning"
+                      : notification.type === NotificationType.DUE_DATE
                       ? "bg-[#1a1b26] text-[#e0af68]"
-                      : notification.type === "success"
+                      : notification.type === NotificationType.COMMENT
                       ? "bg-[#1a1b26] text-[#9ece6a]"
                       : "bg-[#1a1b26] text-[#f7768e]"
                   }`}
                 >
-                  {notification.type}
+                  {getNotificationTypeLabel(notification.type)}
                 </span>
               </div>
               <p className="text-sm text-[#787c99] mt-3">
-                {format(new Date(notification.timestamp), "PPPp", {
+                {format(new Date(notification.createdAt), "PPPp", {
                   locale: th,
                 })}
               </p>

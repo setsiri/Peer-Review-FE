@@ -1,13 +1,16 @@
 import React, { useState } from "react";
 import { useCreateComment, useCreateReview } from "@/app/services/assignments";
 import { CreateReviewRequest, Review } from "@/app/types/review";
+import { AssignmentResponse, AssignmentType } from "@/app/types/assignmentResponse ";
+import { getFullName } from "@/app/utils/userUtils";
 
 interface ReviewProps {
-  assignmentId: string;
-  reviews: Review[];
+  assignment?: AssignmentResponse;
 }
 
-const ReviewsSection: React.FC<ReviewProps> = ({ assignmentId, reviews }) => {
+const ReviewsSection: React.FC<ReviewProps> = ({ assignment }) => {
+  const assignmentId = assignment?.id || "";
+  const reviews = assignment?.reviews || [];
   const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
   const [newReview, setNewReview] = useState("");
   const [newComment, setNewComment] = useState("");
@@ -19,6 +22,7 @@ const ReviewsSection: React.FC<ReviewProps> = ({ assignmentId, reviews }) => {
     setNewComment(""); // เคลียร์ค่า comment เมื่อเปลี่ยน review
   };
 
+  console.log(reviews[0]);
   const selectedReview = reviews.find(review => review.id === selectedReviewId);
 
   const handleAddReview = async () => {
@@ -95,7 +99,7 @@ const ReviewsSection: React.FC<ReviewProps> = ({ assignmentId, reviews }) => {
                 onClick={() => handleReviewClick(review.id)}
               >
                 <div className="flex justify-between items-start mb-2">
-                  <span className="font-medium text-[#a9b1d6]">{review.user.firstName}</span>
+                  <span className="font-medium text-[#a9b1d6]">{getFullName(review.user)}</span>
                   <span className="text-sm text-gray-400">
                     {formatDateTime(new Date(review.createdAt))}
                   </span>
@@ -118,7 +122,7 @@ const ReviewsSection: React.FC<ReviewProps> = ({ assignmentId, reviews }) => {
         <div className="h-px bg-[#1e2030] mx-6" />
 
         {/* Add Review Section */}
-        <div className="p-6 rounded-b-lg">
+        {assignment?.type === AssignmentType.REVIEW && <div className="p-6 rounded-b-lg">
           <textarea
             value={newReview}
             onChange={(e) => setNewReview(e.target.value)}
@@ -135,7 +139,7 @@ const ReviewsSection: React.FC<ReviewProps> = ({ assignmentId, reviews }) => {
           >
             {isPendingCreateReview ? "กำลังส่ง..." : "เพิ่ม Review"}
           </button>
-        </div>
+        </div>}
       </div>
 
       {/* Comments Column */}
@@ -143,7 +147,7 @@ const ReviewsSection: React.FC<ReviewProps> = ({ assignmentId, reviews }) => {
         <div className="p-6">
           <h2 className="text-2xl font-medium text-[#7c5cff]">
             {selectedReview
-              ? `ความคิดเห็นสำหรับ Review ของ ${selectedReview.user.firstName}`
+              ? `ความคิดเห็นสำหรับ Review ของ ${getFullName(selectedReview.user)}`
               : "กรุณาเลือก Review เพื่อดูความคิดเห็น"}
           </h2>
         </div>
@@ -159,7 +163,7 @@ const ReviewsSection: React.FC<ReviewProps> = ({ assignmentId, reviews }) => {
                     className="p-4 bg-[#1a1b26] rounded-lg border border-[#1e2030]"
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <span className="font-medium text-[#a9b1d6]">{comment.user.firstName}</span>
+                      <span className="font-medium text-[#a9b1d6]">{getFullName(comment.user)}</span>
                       <span className="text-sm text-gray-400">
                         {formatDateTime(new Date(comment.createdAt))}
                       </span>

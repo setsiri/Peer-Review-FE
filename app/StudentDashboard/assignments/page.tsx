@@ -4,7 +4,8 @@ import { useState } from "react";
 import { ClipboardDocumentListIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useAssignments } from "@/app/services/assignments";
-import { AssignmentStatus } from "@/app/types/assignmentResponse ";
+import { AssignmentStatus, AssignmentType } from "@/app/types/assignmentResponse ";
+import { getAssignmentStatus, getAssignmentType } from "@/app/utils/assignmentUtils";
 
 type ShowType = "all" | "solo" | "group" | "review";
 type SortType = "name" | "dueDate" | "createdAt";
@@ -14,8 +15,8 @@ export default function AssignmentsPage() {
   const [showType, setShowType] = useState<ShowType>("all");
   const [filter, setFilter] = useState<"all" | "submitted" | "assigned" | "reviewed" | "completed">("all");
   const { data: assignments } = useAssignments();
-  const assignmentPendingTaskCount = assignments?.filter(assignment => assignment.status === AssignmentStatus.ASSIGNED).length || 0;
-  const assignmentInProgressCount = assignments?.filter(assignment => assignment.status === AssignmentStatus.SUBMITTED).length || 0;
+  const assignmentPendingReviewCount = assignments?.filter(assignment => assignment.status === AssignmentStatus.IN_REVIEW).length || 0;
+  const assignmentInProgressCount = assignments?.filter(assignment => assignment.status === AssignmentStatus.ASSIGNED).length || 0;
   const assignmentCompletedCount = assignments?.filter(assignment => assignment.status === AssignmentStatus.COMPLETED).length || 0;
 
   const filteredAndSortedAssignments = assignments?.filter(assignment => {
@@ -23,8 +24,8 @@ export default function AssignmentsPage() {
     const matchesType =
       showType === "all" ||
       (showType === "solo" && !assignment.masterAssignment.isGroupAssignment && !assignment.previousAssignmentId) ||
-      (showType === "group" && assignment.masterAssignment.isGroupAssignment) ||
-      (showType === "review" && !!assignment.previousAssignmentId);
+      (showType === "group" && assignment.masterAssignment.isGroupAssignment && assignment.type === AssignmentType.SUBMISSION) ||
+      (showType === "review" && assignment.type === AssignmentType.REVIEW);
 
     // Status filtering (all, submitted, assigned, reviewed, completed)
     const matchesStatus =
@@ -88,8 +89,8 @@ export default function AssignmentsPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-[#24283b] p-6 rounded-lg">
-          <h3 className="text-[#787c99] text-sm">Pending Tasks</h3>
-          <p className="text-[#f7768e] text-2xl font-bold mt-1">{assignmentPendingTaskCount}</p>
+          <h3 className="text-[#787c99] text-sm">Pending Review</h3>
+          <p className="text-[#f7768e] text-2xl font-bold mt-1">{assignmentPendingReviewCount}</p>
         </div>
         <div className="bg-[#24283b] p-6 rounded-lg">
           <h3 className="text-[#787c99] text-sm">In Progress</h3>
@@ -268,13 +269,11 @@ export default function AssignmentsPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium
-                    ${!assignment.masterAssignment.isGroupAssignment && !assignment.previousAssignmentId ? "bg-[#9ece6a]/10 text-[#9ece6a]" :
-                    assignment.masterAssignment.isGroupAssignment ? "bg-[#7aa2f7]/10 text-[#7aa2f7]" :
+                    ${getAssignmentType(assignment) === "Solo" ? "bg-[#9ece6a]/10 text-[#9ece6a]" :
+                    getAssignmentType(assignment) === "Group" ? "bg-[#7aa2f7]/10 text-[#7aa2f7]" :
                       "bg-[#bb9af7]/10 text-[#bb9af7]"}`}
                   >
-                    {!assignment.masterAssignment.isGroupAssignment && !assignment.previousAssignmentId ? "solo" :
-                      assignment.previousAssignmentId ? "review" :
-                        assignment.masterAssignment.isGroupAssignment ? "group" : ""}
+                    {getAssignmentType(assignment)}
                   </span>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                     assignment.status === AssignmentStatus.SUBMITTED ? "bg-[#7aa2f7]/10 text-[#7aa2f7]" :
@@ -283,7 +282,7 @@ export default function AssignmentsPage() {
                           assignment.status === AssignmentStatus.COMPLETED ? "bg-[#9ece6a]/10 text-[#9ece6a]" :
                             "bg-[#f7768e]/10 text-[#f7768e]"
                   }`}>
-                    {assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1)}
+                    {getAssignmentStatus(assignment.status)}
                   </span>
                 </div>
               </div>

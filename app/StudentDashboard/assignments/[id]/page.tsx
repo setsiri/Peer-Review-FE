@@ -5,19 +5,27 @@ import CodeEditor from "../../../components/CodeEditor";
 import ReviewsSection from "../../../components/ReviewsSection";
 import Link from "next/link";
 import { useAssignment, useSubmitAssignment } from "@/app/services/assignments";
-import { getAssignmentType } from "@/app/utils/assignmentUtils";
-import { AssignmentStatus } from "@/app/types/assignmentResponse ";
+import { getAssignmentStatus, getAssignmentType } from "@/app/utils/assignmentUtils";
+import { AssignmentStatus, AssignmentType } from "@/app/types/assignmentResponse ";
+import { getFullName } from "@/app/utils/userUtils";
 
 export default function AssignmentPage({ params }: { params: { id: string } }) {
   const assignmentId = params.id;
   const [code, setCode] = useState("// เขียนคำตอบของคุณที่นี่\n");
   const [error, setError] = useState<string | null>(null);
   const { data: assignment } = useAssignment(assignmentId);
+  const previousAssignmentId = assignment?.previousAssignmentId || "";
+  const { data: reviewAssignment } = useAssignment(previousAssignmentId);
   const { mutateAsync: submitAssignment, isPending: isPendingSubmitAssignment } = useSubmitAssignment();
+  const isShowSubmitButton = assignment?.type === AssignmentType.SUBMISSION;
 
   useEffect(() => {
-    setCode(assignment?.content || "// เขียนคำตอบของคุณที่นี่\n");
-  }, [assignment]);
+    if (assignment?.type === AssignmentType.SUBMISSION) {
+      setCode(assignment?.content || "// เขียนคำตอบของคุณที่นี่\n");
+    } else if (assignment?.type === AssignmentType.REVIEW) {
+      setCode(reviewAssignment?.content || "// เขียนคำตอบของคุณที่นี่\n");
+    }
+  }, [assignment, reviewAssignment]);
 
   const handleSubmit = async () => {
     try {
@@ -64,7 +72,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
                       assignment?.status === AssignmentStatus.COMPLETED ? "bg-green-500/20 text-green-300" :
                         "bg-gray-500/20 text-gray-300"
               }`}>
-                {assignment?.status && (assignment.status.charAt(0).toUpperCase() + assignment.status.slice(1))}
+                {getAssignmentStatus(assignment?.status)}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -79,7 +87,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
             </div>
             <div className="flex items-center gap-2">
               <span className="text-gray-400">Assigned to:</span>
-              <span className="text-white font-medium">{assignment?.user.firstName}</span>
+              <span className="text-white font-medium">{getFullName(assignment?.user)}</span>
             </div>
           </div>
         </div>
@@ -111,7 +119,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
             <div className="text-sm text-gray-400">
               {assignment?.updatedAt && `Last submitted: ${new Date(assignment.updatedAt).toLocaleString("th-TH")}`}
             </div>
-            <button
+            {isShowSubmitButton && <button
               onClick={handleSubmit}
               disabled={isPendingSubmitAssignment}
               className={`px-6 py-2.5 bg-[#7c5cff] text-white rounded-lg transition-colors ${
@@ -119,13 +127,14 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
               }`}
             >
               {isPendingSubmitAssignment ? "กำลังส่ง..." : "Submit Answer"}
-            </button>
+            </button>}
           </div>
         </div>
 
         {/* Reviews Section */}
+
         <div className="p-6">
-          <ReviewsSection assignmentId={assignmentId} reviews={assignment?.reviews || []} />
+          <ReviewsSection assignment={assignment} />
         </div>
       </div>
     </div>
