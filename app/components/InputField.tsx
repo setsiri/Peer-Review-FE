@@ -1,13 +1,13 @@
 import React from "react";
 
 const InputField = ({
-                      id,
-                      label,
-                      type,
-                      value,
-                      onChange,
-                      placeholder
-                    }: {
+  id,
+  label,
+  type,
+  value,
+  onChange,
+  placeholder
+}: {
   id: string;
   label: string;
   type: string;
