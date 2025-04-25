@@ -18,7 +18,6 @@ export const getAssignmentType = (assignment?: AssignmentResponse) => {
 
 export const getAssignmentStatus = (status?: AssignmentStatus) => {
   if (!status) return "";
-  console.log(status);
 
   if (status === "ASSIGNED") {
     return "Assigned";

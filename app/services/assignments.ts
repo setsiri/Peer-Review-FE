@@ -1,6 +1,11 @@
 import { authAxios } from "@/app/lib/axios";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AssignmentResponse, AssignmentSubmitRequest } from "@/app/types/assignmentResponse ";
+import {
+  AssignmentResponse,
+  AssignmentSubmitRequest,
+  MasterAssignment,
+  ScoreAssignmentRequest
+} from "@/app/types/assignmentResponse ";
 import { CreateCommentRequest, CreateReviewRequest } from "../types/review";
 
 const BASE_URL = "/assignment";
@@ -97,5 +102,68 @@ export const useCreateComment = () => {
         queryKey: ["assignments", variables.assignmentId]
       });
     }
+  });
+};
+
+export const scoreAssignment = async (
+  assignmentId: string,
+  data: ScoreAssignmentRequest
+) => {
+  const response = await authAxios.post<AssignmentResponse>(
+    `/assignment/score/${assignmentId}`,
+    data
+  );
+  return response.data;
+};
+
+// Hook for scoring assignments
+export const useScoreAssignment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ assignmentId, score, masterAssignmentId }: {
+      assignmentId: string;
+      score: number;
+      masterAssignmentId?: string;
+    }) => scoreAssignment(assignmentId, { score }),
+    onSuccess: (data, variables) => {
+
+      // Invalidate the assignments by master assignment query if provided
+      if (variables.masterAssignmentId) {
+        queryClient.invalidateQueries({
+          queryKey: ["assignmentsByMasterAssignment", variables.masterAssignmentId]
+        });
+      }
+    }
+  });
+};
+
+// Function to get assignments by master assignment ID
+export const getAssignmentsByMasterAssignmentId = async (masterAssignmentId: string) => {
+  const response = await authAxios.get<AssignmentResponse[]>(`/assignment/master-assignment/${masterAssignmentId}`);
+  return response.data;
+};
+
+// React Query hook for getting assignments by master assignment ID
+export const useAssignmentsByMasterAssignmentId = (masterAssignmentId: string) => {
+  return useQuery({
+    queryKey: ["assignmentsByMasterAssignment", masterAssignmentId],
+    queryFn: () => getAssignmentsByMasterAssignmentId(masterAssignmentId),
+    enabled: !!masterAssignmentId // Only run when ID is available
+  });
+};
+
+// Function to get a master assignment by ID
+export const getMasterAssignment = async (id: string) => {
+  const response = await authAxios.get<MasterAssignment>(`/master-assignments/${id}`);
+  return response.data;
+};
+
+// React Query hook for getting a master assignment
+export const useMasterAssignment = (id: string) => {
+  return useQuery({
+    queryKey: ["masterAssignments", id],
+    queryFn: () => getMasterAssignment(id),
+    enabled: !!id // Only run when ID is available
   });
 };

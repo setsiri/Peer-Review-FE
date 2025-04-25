@@ -1,62 +1,33 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
 import AssignmentHeader from "../../../components/AssignmentHeader";
-import { Assignment } from "../../../types/assignment";
-
-interface Student {
-  id: string;
-  name: string;
-  status:
-    | "ASSIGNED"
-    | "SUBMITTED"
-    | "READY_TO_REVIEW"
-    | "IN_REVIEW"
-    | "REVIEWED"
-    | "COMPLETED";
-}
+import {
+  useAssignmentsByMasterAssignmentId,
+  useMasterAssignment,
+  useScoreAssignment
+} from "@/app/services/assignments";
+import { getFullName } from "@/app/utils/userUtils";
+import { getAssignmentStatus } from "@/app/utils/assignmentUtils";
+import { Rating } from "@mui/material";
+import { AssignmentResponse, AssignmentStatus, AssignmentType } from "@/app/types/assignmentResponse ";
 
 type SortType = "asc" | "desc";
 
 export default function AssignmentPage({ params }: { params: { id: string } }) {
-  const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [assignment, setAssignment] = useState<Assignment | null>(null);
-  const [students, setStudents] = useState<Student[]>([]);
+  const masterAssignmentId = params.id;
   const [sortBy, setSortBy] = useState<SortType>("asc");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const { data: masterAssignment } = useMasterAssignment(masterAssignmentId);
+  const { data: assignments } = useAssignmentsByMasterAssignmentId(masterAssignmentId);
+  const { mutateAsync: scoreAssignment, isPending: isPendingScoreAssignment } = useScoreAssignment();
 
-  useEffect(() => {
-    // Mock data - ในการใช้งานจริงควรดึงข้อมูลจาก API
-    const mockStudents: Student[] = [
-      { id: "1", name: "student สมใจ เรียนดี", status: "ASSIGNED" },
-      { id: "2", name: "student-2", status: "SUBMITTED" },
-      { id: "3", name: "student-3", status: "READY_TO_REVIEW" },
-      { id: "4", name: "student-4", status: "IN_REVIEW" },
-      { id: "5", name: "student-5", status: "REVIEWED" },
-      { id: "6", name: "student-6", status: "COMPLETED" },
-    ];
-
-    const mockAssignment: Assignment = {
-      id: params.id as string,
-      title: "Assignment - Review Solo 1",
-      type: "solo",
-      dueDate: new Date("2024-03-28"),
-      description: "คำอธิบายโจทย์จะแสดงที่นี่...",
-    };
-
-    setAssignment(mockAssignment);
-    setStudents(mockStudents);
-  }, [params.id]);
-
-  const filteredAndSortedStudents = students
-    .filter((student) =>
-      statusFilter === "all" ? true : student.status === statusFilter
-    )
+  const filteredAndSortedAssignments = assignments?.filter((assignment) =>
+    statusFilter === "all" ? true : assignment.status === statusFilter
+  )
     .sort((a, b) => {
-      const comparison = a.name.localeCompare(b.name);
+      const comparison = getFullName(a.user).localeCompare(getFullName(b.user));
       return sortBy === "asc" ? comparison : -comparison;
     });
 
@@ -67,14 +38,45 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
       READY_TO_REVIEW: "bg-yellow-500",
       IN_REVIEW: "bg-purple-500",
       REVIEWED: "bg-indigo-500",
-      COMPLETED: "bg-gray-500",
+      COMPLETED: "bg-gray-500"
     };
     return colors[status as keyof typeof colors] || "bg-gray-500";
   };
 
-  if (!assignment) {
-    return <div>Loading...</div>;
-  }
+  const getTypeColor = (type: AssignmentType) => {
+    const colors = {
+      [AssignmentType.SUBMISSION]: "bg-cyan-500",
+      [AssignmentType.REVIEW]: "bg-fuchsia-500"
+      // Add other types as needed
+    };
+    return colors[type] || "bg-gray-500";
+  };
+
+  const getAssignmentTypeDisplay = (type: AssignmentType) => {
+    const types = {
+      [AssignmentType.SUBMISSION]: "Submission",
+      [AssignmentType.REVIEW]: "Review"
+      // Add other types as needed
+    };
+    return types[type] || "Unknown";
+  };
+
+  const handleScoreChange = async (assignment: AssignmentResponse, newValue: number | null) => {
+    try {
+      if (newValue === null || !assignment?.id) return;
+
+      await scoreAssignment({
+        assignmentId: assignment.id,
+        score: newValue,
+        masterAssignmentId
+      });
+
+      // You could add a success notification here if needed
+    } catch (error) {
+      console.error("Error updating assignment score:", error);
+      // You could add an error notification here if needed
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#1a1b26] text-white">
@@ -103,7 +105,7 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
 
       <div className="p-6">
         <div className="mb-4">
-          <AssignmentHeader assignment={assignment} />
+          <AssignmentHeader masterAssignment={masterAssignment} />
         </div>
 
         {/* Controls */}
@@ -119,10 +121,10 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
                     onClick={() => setSortBy("asc")}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
                       ${
-                        sortBy === "asc"
-                          ? "bg-[#456bd6] text-white"
-                          : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
-                      }`}
+                      sortBy === "asc"
+                        ? "bg-[#456bd6] text-white"
+                        : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
+                    }`}
                   >
                     Name (a-z)
                   </button>
@@ -130,10 +132,10 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
                     onClick={() => setSortBy("desc")}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
                       ${
-                        sortBy === "desc"
-                          ? "bg-[#456bd6] text-white"
-                          : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
-                      }`}
+                      sortBy === "desc"
+                        ? "bg-[#456bd6] text-white"
+                        : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
+                    }`}
                   >
                     Name (z-a)
                   </button>
@@ -149,10 +151,10 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
                     onClick={() => setStatusFilter("all")}
                     className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
                       ${
-                        statusFilter === "all"
-                          ? "bg-[#456bd6] text-white"
-                          : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
-                      }`}
+                      statusFilter === "all"
+                        ? "bg-[#456bd6] text-white"
+                        : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
+                    }`}
                   >
                     All
                   </button>
@@ -162,17 +164,17 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
                     "READY_TO_REVIEW",
                     "IN_REVIEW",
                     "REVIEWED",
-                    "COMPLETED",
+                    "COMPLETED"
                   ].map((status) => (
                     <button
                       key={status}
                       onClick={() => setStatusFilter(status)}
                       className={`px-4 py-2 rounded-full text-xs font-medium transition-colors
                         ${
-                          statusFilter === status
-                            ? "bg-[#456bd6] text-white"
-                            : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
-                        }`}
+                        statusFilter === status
+                          ? "bg-[#456bd6] text-white"
+                          : "bg-[#1a1b26] text-[#a9b1d6] hover:bg-[#2a2e3f]"
+                      }`}
                     >
                       {status}
                     </button>
@@ -186,21 +188,43 @@ export default function AssignmentPage({ params }: { params: { id: string } }) {
         {/* Student List */}
         <div className="bg-[#24283b] rounded-lg overflow-hidden">
           <div className="divide-y divide-[#1a1b26]">
-            {filteredAndSortedStudents.map((student) => (
+            {filteredAndSortedAssignments?.map((assignment) => (
               <div
-                key={student.id}
+                key={assignment.id}
                 className="p-6 hover:bg-[#1a1b26] transition-colors flex items-center justify-between"
               >
                 <div>
-                  <h3 className="text-[#a9b1d6] font-medium">{student.name}</h3>
+                  <h3 className="text-[#a9b1d6] font-medium">{getFullName(assignment.user)}</h3>
                 </div>
                 <div className="flex items-center gap-3">
+                  {assignment.type == AssignmentType.SUBMISSION && (
+                    <Rating
+                      value={assignment.score || 0}
+                      disabled={assignment.status !== AssignmentStatus.REVIEWED}
+                      onChange={(_, value) => handleScoreChange(assignment, value)}
+                      sx={{
+                        "& .MuiRating-iconFilled": {
+                          color: "#f59e0b" // Amber/gold color for filled stars
+                        },
+                        "& .MuiRating-iconEmpty": {
+                          color: "rgba(255, 255, 255, 0.3)" // Lighter color for empty stars
+                        },
+                        "&.Mui-disabled": {
+                          opacity: 0.5 // Better visibility for disabled state
+                        }
+                      }}
+                    />
+                  )}
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${getTypeColor(assignment.type)} text-white`}>
+                    {getAssignmentTypeDisplay(assignment.type)}
+                  </span>
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                      student.status
+                      assignment.status
                     )} text-white`}
                   >
-                    {student.status}
+                    {getAssignmentStatus(assignment.status)}
                   </span>
                 </div>
               </div>

@@ -43,8 +43,13 @@ export interface AssignmentResponse {
   createdAt: string;
   updatedAt: string;
   reviews: Review[];
+  score: number;
 }
 
 export interface AssignmentSubmitRequest {
   content: string;
+}
+
+export interface ScoreAssignmentRequest {
+  score: number;
 }
