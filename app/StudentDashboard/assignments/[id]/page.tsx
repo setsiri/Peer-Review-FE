@@ -3,17 +3,10 @@
 import { useEffect, useState } from "react";
 import CodeEditor from "../../../components/CodeEditor";
 import ReviewsSection from "../../../components/ReviewsSection";
-import { Assignment } from "@/app/types/assignment";
 import Link from "next/link";
-import {
-  useAssignment,
-  useAssignmentReviews,
-  useCreateComment,
-  useCreateReview,
-  useSubmitAssignment
-} from "@/app/services/assignments";
+import { useAssignment, useSubmitAssignment } from "@/app/services/assignments";
 import { getAssignmentType } from "@/app/utils/assignmentUtils";
-import { AssignmentStatus, AssignmentType } from "@/app/types/assignmentResponse ";
+import { AssignmentStatus } from "@/app/types/assignmentResponse ";
 
 export default function AssignmentPage({ params }: { params: { id: string } }) {
   const assignmentId = params.id;
