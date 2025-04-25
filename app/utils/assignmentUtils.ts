@@ -4,12 +4,12 @@ export type AssignmentTypeValue = "" | "solo" | "group" | "review";
 
 // Determine if assignment is a solo assignment
 export const isSoloAssignment = (assignment: AssignmentResponse): boolean => {
-  return !assignment.groupId && !assignment.previousAssignmentId;
+  return !assignment.masterAssignment.isGroupAssignment && !assignment.previousAssignmentId;
 };
 
 // Determine if assignment is a group assignment
 export const isGroupAssignment = (assignment: AssignmentResponse): boolean => {
-  return !!assignment.groupId;
+  return assignment.masterAssignment.isGroupAssignment;
 };
 
 // Determine if assignment is a review assignment

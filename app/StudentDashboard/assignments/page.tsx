@@ -22,8 +22,8 @@ export default function AssignmentsPage() {
     // Type filtering (all, solo, group, review)
     const matchesType =
       showType === "all" ||
-      (showType === "solo" && !assignment.groupId && !assignment.previousAssignmentId) ||
-      (showType === "group" && !!assignment.groupId) ||
+      (showType === "solo" && !assignment.masterAssignment.isGroupAssignment && !assignment.previousAssignmentId) ||
+      (showType === "group" && assignment.masterAssignment.isGroupAssignment) ||
       (showType === "review" && !!assignment.previousAssignmentId);
 
     // Status filtering (all, submitted, assigned, reviewed, completed)
@@ -268,13 +268,13 @@ export default function AssignmentsPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium
-                    ${!assignment.groupId && !assignment.previousAssignmentId ? "bg-[#9ece6a]/10 text-[#9ece6a]" :
-                    assignment.groupId ? "bg-[#7aa2f7]/10 text-[#7aa2f7]" :
+                    ${!assignment.masterAssignment.isGroupAssignment && !assignment.previousAssignmentId ? "bg-[#9ece6a]/10 text-[#9ece6a]" :
+                    assignment.masterAssignment.isGroupAssignment ? "bg-[#7aa2f7]/10 text-[#7aa2f7]" :
                       "bg-[#bb9af7]/10 text-[#bb9af7]"}`}
                   >
-                    {!assignment.groupId && !assignment.previousAssignmentId ? "solo" :
+                    {!assignment.masterAssignment.isGroupAssignment && !assignment.previousAssignmentId ? "solo" :
                       assignment.previousAssignmentId ? "review" :
-                        assignment.groupId ? "group" : ""}
+                        assignment.masterAssignment.isGroupAssignment ? "group" : ""}
                   </span>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                     assignment.status === AssignmentStatus.SUBMITTED ? "bg-[#7aa2f7]/10 text-[#7aa2f7]" :
