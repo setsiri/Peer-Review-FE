@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useCreateComment, useCreateReview } from "@/app/services/assignments";
-import { CreateReviewRequest, Review } from "@/app/types/review";
+import { CreateReviewRequest, Review, UserRole } from "@/app/types/review";
 import { AssignmentResponse, AssignmentType } from "@/app/types/assignmentResponse ";
 import { getFullName } from "@/app/utils/userUtils";
+import { useUser } from "@/app/contexts/UserContext";
 
 interface ReviewProps {
   assignment?: AssignmentResponse;
@@ -14,6 +15,7 @@ const ReviewsSection: React.FC<ReviewProps> = ({ assignment }) => {
   const [selectedReviewId, setSelectedReviewId] = useState<string | null>(null);
   const [newReview, setNewReview] = useState("");
   const [newComment, setNewComment] = useState("");
+  const { user } = useUser();
   const { mutateAsync: createReview, isPending: isPendingCreateReview } = useCreateReview();
   const { mutateAsync: createComment, isPending: isPendingCreateComment } = useCreateComment();
 
@@ -121,24 +123,26 @@ const ReviewsSection: React.FC<ReviewProps> = ({ assignment }) => {
         <div className="h-px bg-[#1e2030] mx-6" />
 
         {/* Add Review Section */}
-        {assignment?.type === AssignmentType.REVIEW && <div className="p-6 rounded-b-lg">
+        {assignment?.type === AssignmentType.REVIEW && user?.role === UserRole.STUDENT && (
+          <div className="p-6 rounded-b-lg">
           <textarea
             value={newReview}
             onChange={(e) => setNewReview(e.target.value)}
             placeholder="เขียน Review ของคุณที่นี่..."
             className="w-full h-32 p-3 bg-[#1e1e1e] text-white rounded-lg border border-[#1e2030] focus:border-[#7c5cff] focus:outline-none resize-none mb-4"
           />
-          <button
-            onClick={handleAddReview}
-            disabled={isPendingCreateReview || !newReview.trim()}
-            className={`w-full py-2.5 px-4 rounded-lg font-medium transition-colors
+            <button
+              onClick={handleAddReview}
+              disabled={isPendingCreateReview || !newReview.trim()}
+              className={`w-full py-2.5 px-4 rounded-lg font-medium transition-colors
               ${isPendingCreateReview || !newReview.trim()
-              ? "bg-gray-600 cursor-not-allowed"
-              : "bg-[#7c5cff] hover:bg-[#6f51e6]"}`}
-          >
-            {isPendingCreateReview ? "กำลังส่ง..." : "เพิ่ม Review"}
-          </button>
-        </div>}
+                ? "bg-gray-600 cursor-not-allowed"
+                : "bg-[#7c5cff] hover:bg-[#6f51e6]"}`}
+            >
+              {isPendingCreateReview ? "กำลังส่ง..." : "เพิ่ม Review"}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Comments Column */}
